@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_conference_root" name="Conference"
+              web_icon="conference_management,static/description/icon.png"
+              groups="group_conference_reviewer" sequence="46"/>
+
+    <menuitem id="menu_conference_submissions" name="Submissions" parent="menu_conference_root"
+              action="conference_submission_action" groups="event.group_event_user" sequence="10"/>
+
+    <menuitem id="menu_conference_reviews" name="Reviews" parent="menu_conference_root" sequence="20"/>
+    <menuitem id="menu_conference_reviews_mine" name="My Reviews" parent="menu_conference_reviews"
+              action="conference_review_action_mine" sequence="10"/>
+    <menuitem id="menu_conference_reviews_all" name="All Reviews" parent="menu_conference_reviews"
+              action="conference_review_action" groups="event.group_event_user" sequence="20"/>
+
+    <menuitem id="menu_conference_documents" name="Documents" parent="menu_conference_root"
+              action="conference_document_action" groups="event.group_event_user" sequence="30"/>
+
+    <menuitem id="menu_conference_events" name="Events" parent="menu_conference_root"
+              action="event.action_event_view" groups="event.group_event_user" sequence="40"/>
+</odoo>

@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_conference_submission_organizer,conference.submission organizer,model_conference_submission,event.group_event_user,1,1,1,1
+access_conference_submission_portal,conference.submission portal,model_conference_submission,base.group_portal,1,0,0,0
+access_conference_review_organizer,conference.review organizer,model_conference_review,event.group_event_user,1,1,1,1
+access_conference_review_reviewer,conference.review reviewer,model_conference_review,group_conference_reviewer,1,1,0,0
+access_conference_document_organizer,conference.document organizer,model_conference_document,event.group_event_user,1,1,1,1
+access_conference_document_reviewer,conference.document reviewer,model_conference_document,group_conference_reviewer,1,0,0,0
+access_conference_document_portal,conference.document portal,model_conference_document,base.group_portal,1,0,0,0
+access_conference_av_pack_organizer,conference.av.pack organizer,model_conference_av_pack,event.group_event_user,1,1,1,1

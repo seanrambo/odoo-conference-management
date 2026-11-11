@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="conference_av_pack_view_form" model="ir.ui.view">
+        <field name="name">conference.av.pack.form</field>
+        <field name="model">conference.av.pack</field>
+        <field name="arch" type="xml">
+            <form string="Download AV Pack">
+                <p class="text-muted">
+                    One ZIP with a folder per room and day. Files are named by start time, room and speaker,
+                    for example <code>0900_Hall-A_J-Kamau_Opening-keynote.pptx</code>.
+                </p>
+                <group>
+                    <group>
+                        <field name="event_id" readonly="1"/>
+                        <field name="date"/>
+                        <field name="location_ids" widget="many2many_tags"/>
+                    </group>
+                    <group>
+                        <field name="document_scope" widget="radio"/>
+                        <field name="only_approved"/>
+                        <field name="include_unscheduled"/>
+                        <field name="document_count" string="Files Included"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_download" type="object" string="Download ZIP" class="btn-primary"
+                            invisible="not document_count"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

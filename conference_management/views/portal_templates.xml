@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Portal home entries -->
+    <template id="portal_my_home_conference" name="Conference: submissions and files"
+              inherit_id="portal.portal_my_home" customize_show="True" priority="40">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <t t-set="portal_service_category_enable" t-value="True"/>
+        </xpath>
+        <div id="portal_service_category" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/conference_management/static/description/icon.png'"/>
+                <t t-set="title">My Submissions</t>
+                <t t-set="text">Papers and talk proposals, review status and feedback</t>
+                <t t-set="url" t-value="'/my/submissions'"/>
+                <t t-set="placeholder_count" t-value="'conference_submission_count'"/>
+                <t t-set="config_card" t-value="True"/>
+            </t>
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/conference_management/static/description/icon.png'"/>
+                <t t-set="title">My Conference Files</t>
+                <t t-set="text">Upload slides, papers and handouts for events you take part in</t>
+                <t t-set="url" t-value="'/my/conference/documents'"/>
+                <t t-set="placeholder_count" t-value="'conference_document_count'"/>
+                <t t-set="config_card" t-value="True"/>
+            </t>
+        </div>
+    </template>
+
+    <template id="portal_breadcrumbs_conference" name="Conference breadcrumbs"
+              inherit_id="portal.portal_breadcrumbs" priority="40">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name in ('conference_submissions', 'conference_submission', 'conference_submission_new')"
+                t-attf-class="breadcrumb-item #{'active' if page_name == 'conference_submissions' else ''}">
+                <a t-if="page_name != 'conference_submissions'" href="/my/submissions">Submissions</a>
+                <t t-else="">Submissions</t>
+            </li>
+            <li t-if="page_name == 'conference_submission'" class="breadcrumb-item active">
+                <t t-out="submission.reference"/>
+            </li>
+            <li t-if="page_name == 'conference_submission_new'" class="breadcrumb-item active">New</li>
+            <li t-if="page_name == 'conference_documents'" class="breadcrumb-item active">Conference Files</li>
+        </xpath>
+    </template>
+
+    <!-- Feedback banner shared by portal pages -->
+    <template id="portal_conference_alerts" name="Conference alerts">
+        <div t-if="error" class="alert alert-danger" role="alert" t-out="error"/>
+        <div t-if="message" class="alert alert-success" role="status" t-out="message"/>
+    </template>
+
+    <template id="portal_submission_state_badge" name="Submission status badge">
+        <t t-set="badge_class" t-value="{
+            'draft': 'text-bg-light', 'submitted': 'text-bg-info', 'under_review': 'text-bg-info',
+            'revision': 'text-bg-warning', 'accepted': 'text-bg-success', 'rejected': 'text-bg-danger',
+            'withdrawn': 'text-bg-secondary'}.get(sub.state, 'text-bg-light')"/>
+        <span t-attf-class="badge rounded-pill #{badge_class}" t-field="sub.state"/>
+    </template>
+
+    <!-- Submissions list -->
+    <template id="portal_my_submissions" name="My Submissions">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Submissions</t>
+            </t>
+            <div t-if="open_events" class="alert alert-info d-flex flex-wrap align-items-center gap-2">
+                <span class="me-auto">Calls for papers open now:
+                    <t t-foreach="open_events" t-as="ev"><strong t-out="ev.name"/><t t-if="not ev_last">, </t></t>
+                </span>
+                <a href="/my/submissions/new" class="btn btn-primary btn-sm">New submission</a>
+            </div>
+            <p t-if="not submissions" class="alert alert-light">You have not submitted anything yet.</p>
+            <t t-if="submissions" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Reference</th>
+                        <th>Title</th>
+                        <th class="d-none d-md-table-cell">Event</th>
+                        <th class="d-none d-md-table-cell">Submitted</th>
+                        <th class="text-end">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="submissions" t-as="sub">
+                        <td><a t-att-href="sub.get_portal_url()" t-out="sub.reference"/></td>
+                        <td t-out="sub.name"/>
+                        <td class="d-none d-md-table-cell" t-out="sub.event_id.name"/>
+                        <td class="d-none d-md-table-cell"><span t-field="sub.submit_date" t-options="{'widget': 'date'}"/></td>
+                        <td class="text-end"><t t-call="conference_management.portal_submission_state_badge"/></td>
+                    </tr>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <!-- Fields shared by the new and edit forms -->
+    <template id="portal_submission_fields" name="Submission form fields">
+        <div class="mb-3">
+            <label class="form-label fw-bold" for="cm_name">Title</label>
+            <input type="text" class="form-control" id="cm_name" name="name" required="required" maxlength="250"
+                   t-att-value="submission.name"/>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold" for="cm_type">Session type</label>
+                <select class="form-select" id="cm_type" name="submission_type">
+                    <t t-foreach="submission_types" t-as="st">
+                        <option t-att-value="st[0]" t-att-selected="st[0] == (submission.submission_type or 'talk')" t-out="st[1]"/>
+                    </t>
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold" for="cm_duration">Requested length</label>
+                <select class="form-select" id="cm_duration" name="duration">
+                    <t t-foreach="[(0.25, '15 minutes'), (0.5, '30 minutes'), (0.75, '45 minutes'), (1.0, '1 hour'), (1.5, '1.5 hours'), (2.0, '2 hours'), (3.0, 'Half day')]" t-as="d">
+                        <option t-att-value="d[0]" t-att-selected="d[0] == (submission.duration or 0.5)" t-out="d[1]"/>
+                    </t>
+                </select>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold" for="cm_abstract">Abstract</label>
+            <textarea class="form-control" id="cm_abstract" name="abstract" rows="8" required="required"
+                      placeholder="What is it about, and what will attendees take away?" t-out="submission.abstract or ''"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold" for="cm_keywords">Keywords</label>
+            <input type="text" class="form-control" id="cm_keywords" name="keywords" maxlength="250"
+                   placeholder="e.g. fintech, mobile money, SMEs" t-att-value="submission.keywords"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold" for="cm_coauthors">Co-authors <span class="fw-normal text-muted">(optional)</span></label>
+            <textarea class="form-control" id="cm_coauthors" name="coauthors" rows="3"
+                      placeholder="One per line, with affiliation" t-out="submission.coauthors or ''"/>
+        </div>
+    </template>
+
+    <!-- New submission -->
+    <template id="portal_submission_form" name="New Submission">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">New Submission</t>
+            </t>
+            <t t-call="conference_management.portal_conference_alerts"/>
+            <div t-if="not events" class="alert alert-warning">There is no open call for papers at the moment.</div>
+            <form t-else="" action="/my/submissions/new" method="post" enctype="multipart/form-data" class="mt-3">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                <div class="mb-3">
+                    <label class="form-label fw-bold" for="cm_event">Event</label>
+                    <select class="form-select" id="cm_event" name="event_id" required="required">
+                        <t t-foreach="events" t-as="ev">
+                            <option t-att-value="ev.id" t-att-selected="ev == selected_event">
+                                <t t-out="ev.name"/>
+                                <t t-if="ev.cfp_deadline"> (deadline <t t-out="ev.cfp_deadline" t-options="{'widget': 'datetime', 'tz_name': ev.date_tz}"/>)</t>
+                            </option>
+                        </t>
+                    </select>
+                </div>
+                <div t-if="selected_event.cfp_instructions" class="border rounded p-3 mb-3 bg-light small">
+                    <div t-field="selected_event.cfp_instructions"/>
+                </div>
+                <t t-call="conference_management.portal_submission_fields"/>
+                <div class="mb-3">
+                    <label class="form-label fw-bold" for="cm_file">Paper or supporting file <span class="fw-normal text-muted">(optional)</span></label>
+                    <input type="file" class="form-control" id="cm_file" name="file"/>
+                    <div class="form-text" t-if="selected_event.doc_allowed_extensions">
+                        Accepted: <t t-out="selected_event.doc_allowed_extensions"/>. Up to <t t-out="selected_event.doc_max_size_mb"/> MB.
+                    </div>
+                    <input type="hidden" name="document_type" value="paper"/>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" name="action" value="submit" class="btn btn-primary">Submit for review</button>
+                    <button type="submit" name="action" value="draft" class="btn btn-secondary">Save as draft</button>
+                </div>
+            </form>
+        </t>
+    </template>
+
+    <!-- Submission detail -->
+    <template id="portal_submission_page" name="Submission">
+        <t t-call="portal.portal_layout">
+            <t t-set="o_portal_fullwidth_alert" groups="event.group_event_user">
+                <t t-call="portal.portal_back_in_edit_mode">
+                    <t t-set="backend_url" t-value="'/odoo/action-conference_management.conference_submission_action/%s' % submission.id"/>
+                </t>
+            </t>
+            <t t-set="sub" t-value="submission"/>
+            <div class="mt-3">
+                <t t-call="conference_management.portal_conference_alerts"/>
+                <div class="d-flex flex-wrap align-items-start gap-2 mb-2">
+                    <div class="me-auto">
+                        <div class="text-muted small"><t t-out="sub.reference"/> · <t t-out="sub.event_id.name"/></div>
+                        <h3 class="mb-0" t-out="sub.name"/>
+                    </div>
+                    <t t-call="conference_management.portal_submission_state_badge"/>
+                </div>
+
+                <div t-if="sub.state == 'accepted'" class="alert alert-success">
+                    Your submission has been accepted.
+                    <t t-if="sub.track_id.date">It is scheduled for <strong t-out="sub.track_id.date" t-options="{'widget': 'datetime', 'tz_name': sub.event_id.date_tz}"/><t t-if="sub.track_id.location_id"> in <strong t-out="sub.track_id.location_id.name"/></t>.</t>
+                    Please upload your slides from <a href="/my/conference/documents">My Conference Files</a>.
+                </div>
+                <div t-if="sub.state == 'revision'" class="alert alert-warning">
+                    The committee has asked for a revision. Update your abstract or upload a revised file below, then submit again.
+                </div>
+
+                <div t-if="sub.decision_note or feedback" class="card mb-3">
+                    <div class="card-header fw-bold">Feedback from the committee</div>
+                    <div class="card-body">
+                        <p t-if="sub.decision_note" style="white-space: pre-wrap;" t-out="sub.decision_note"/>
+                        <t t-foreach="feedback" t-as="comment">
+                            <blockquote class="border-start border-3 ps-3 text-muted" style="white-space: pre-wrap;" t-out="comment"/>
+                        </t>
+                    </div>
+                </div>
+
+                <!-- Editable form or read-only details -->
+                <form t-if="editable" t-attf-action="/my/submissions/#{sub.id}/save" method="post" class="card card-body mb-3">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <t t-set="submission" t-value="sub"/>
+                    <t t-call="conference_management.portal_submission_fields"/>
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="submit" class="btn btn-primary">
+                            <t t-if="sub.state == 'revision'">Resubmit for review</t><t t-else="">Submit for review</t>
+                        </button>
+                        <button type="submit" name="action" value="save" class="btn btn-secondary">Save</button>
+                    </div>
+                </form>
+                <div t-else="" class="card card-body mb-3">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Session type</dt><dd class="col-sm-9"><span t-field="sub.submission_type"/></dd>
+                        <dt class="col-sm-3" t-if="sub.keywords">Keywords</dt><dd class="col-sm-9" t-if="sub.keywords" t-out="sub.keywords"/>
+                        <dt class="col-sm-3" t-if="sub.coauthors">Co-authors</dt><dd class="col-sm-9" t-if="sub.coauthors" style="white-space: pre-wrap;" t-out="sub.coauthors"/>
+                        <dt class="col-sm-3">Abstract</dt><dd class="col-sm-9" style="white-space: pre-wrap;" t-out="sub.abstract"/>
+                    </dl>
+                </div>
+
+                <!-- Files -->
+                <div class="card mb-3">
+                    <div class="card-header fw-bold">Files</div>
+                    <ul class="list-group list-group-flush" t-if="sub.document_ids">
+                        <li t-foreach="sub.document_ids" t-as="doc" class="list-group-item d-flex flex-wrap align-items-center gap-2">
+                            <a t-att-href="doc._get_download_url()" class="me-auto"><i class="fa fa-file-o me-1"/><t t-out="doc.name"/></a>
+                            <span class="text-muted small"><t t-out="doc.filename"/> · <t t-out="doc.file_size_display"/><t t-if="doc.version &gt; 1"> · v<t t-out="doc.version"/></t></span>
+                        </li>
+                    </ul>
+                    <div t-else="" class="card-body text-muted">No files yet.</div>
+                    <form t-if="sub.state not in ('rejected', 'withdrawn')" t-attf-action="/my/submissions/#{sub.id}/upload"
+                          method="post" enctype="multipart/form-data" class="card-footer d-flex flex-wrap gap-2 align-items-end">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div>
+                            <label class="form-label small mb-1" for="cm_sub_doc_type">Type</label>
+                            <select class="form-select form-select-sm" id="cm_sub_doc_type" name="document_type">
+                                <t t-foreach="doc_types" t-as="dt"><option t-att-value="dt[0]" t-att-selected="dt[0] == 'paper'" t-out="dt[1]"/></t>
+                            </select>
+                        </div>
+                        <div class="flex-grow-1">
+                            <label class="form-label small mb-1" for="cm_sub_file">File</label>
+                            <input type="file" class="form-control form-control-sm" id="cm_sub_file" name="file" required="required"/>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-secondary">Upload</button>
+                    </form>
+                </div>
+
+                <form t-if="sub.state not in ('accepted', 'rejected', 'withdrawn')" t-attf-action="/my/submissions/#{sub.id}/withdraw"
+                      method="post" class="mb-4" onsubmit="return confirm('Withdraw this submission? This cannot be undone from the portal.');">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <button type="submit" class="btn btn-link text-danger p-0">Withdraw submission</button>
+                </form>
+
+                <div id="submission_communication" class="mt-4">
+                    <h4>Messages</h4>
+                    <t t-call="portal.message_thread"/>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Conference files -->
+    <template id="portal_my_documents" name="My Conference Files">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Conference Files</t>
+            </t>
+            <t t-call="conference_management.portal_conference_alerts"/>
+
+            <div t-if="upload_events" class="card mb-4">
+                <div class="card-header fw-bold">Upload a file</div>
+                <form action="/my/conference/documents/upload" method="post" enctype="multipart/form-data" class="card-body">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="cm_doc_event">Event</label>
+                            <select class="form-select" id="cm_doc_event" name="event_id" required="required">
+                                <t t-foreach="upload_events" t-as="ev">
+                                    <option t-att-value="ev.id">
+                                        <t t-out="ev.name"/>
+                                        <t t-if="ev.doc_upload_deadline"> (until <t t-out="ev.doc_upload_deadline" t-options="{'widget': 'datetime', 'tz_name': ev.date_tz}"/>)</t>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3" t-if="tracks">
+                            <label class="form-label" for="cm_doc_track">For my session <span class="text-muted">(speakers)</span></label>
+                            <select class="form-select" id="cm_doc_track" name="track_id">
+                                <option value="">Not for a specific session</option>
+                                <t t-foreach="tracks" t-as="tr">
+                                    <option t-att-value="tr.id"><t t-out="tr.name"/> · <t t-out="tr.event_id.name"/></option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="cm_doc_name">Title</label>
+                            <input type="text" class="form-control" id="cm_doc_name" name="name" maxlength="250"
+                                   placeholder="Defaults to the file name"/>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label" for="cm_doc_type">Type</label>
+                            <select class="form-select" id="cm_doc_type" name="document_type">
+                                <t t-foreach="doc_types" t-as="dt"><option t-att-value="dt[0]" t-out="dt[1]"/></t>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label" for="cm_doc_vis">Who can see it</label>
+                            <select class="form-select" id="cm_doc_vis" name="visibility">
+                                <t t-foreach="visibilities" t-as="vis">
+                                    <option t-att-value="vis[0]" t-att-selected="vis[0] == 'attendees'" t-out="vis[1]"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label" for="cm_doc_file">File</label>
+                            <input type="file" class="form-control" id="cm_doc_file" name="file" required="required"/>
+                            <div class="form-text">Organizers approve each file before others can see it.</div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label" for="cm_doc_desc">Notes <span class="text-muted">(optional)</span></label>
+                            <textarea class="form-control" id="cm_doc_desc" name="description" rows="2"/>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
+            <div t-else="" class="alert alert-light">
+                Uploads open when you are registered for, speaking at, or have submitted to an event that accepts files.
+            </div>
+
+            <p t-if="not documents" class="text-muted">You have not uploaded any files yet.</p>
+            <t t-if="documents" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>File</th>
+                        <th class="d-none d-md-table-cell">Event / Session</th>
+                        <th class="d-none d-md-table-cell">Visible to</th>
+                        <th>Status</th>
+                        <th class="text-end">New version</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="documents" t-as="doc">
+                        <td>
+                            <a t-att-href="doc._get_download_url()" t-out="doc.name"/>
+                            <div class="small text-muted"><t t-out="doc.filename"/> · <t t-out="doc.file_size_display"/><t t-if="doc.version &gt; 1"> · v<t t-out="doc.version"/></t></div>
+                        </td>
+                        <td class="d-none d-md-table-cell">
+                            <t t-out="doc.event_id.name"/>
+                            <div t-if="doc.track_id" class="small text-muted" t-out="doc.track_id.name"/>
+                        </td>
+                        <td class="d-none d-md-table-cell"><span t-field="doc.visibility"/></td>
+                        <td>
+                            <t t-set="doc_badge" t-value="{'approved': 'text-bg-success', 'rejected': 'text-bg-danger'}.get(doc.state, 'text-bg-warning')"/>
+                            <span t-attf-class="badge rounded-pill #{doc_badge}" t-field="doc.state"/>
+                            <div t-if="doc.state == 'rejected' and doc.rejection_reason" class="small text-danger" t-out="doc.rejection_reason"/>
+                        </td>
+                        <td class="text-end">
+                            <form t-if="doc.event_id._conference_is_upload_open()" t-attf-action="/my/conference/documents/#{doc.id}/replace"
+                                  method="post" enctype="multipart/form-data" class="d-inline-flex gap-1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="file" name="file" required="required" class="form-control form-control-sm" style="max-width: 200px;"
+                                       t-attf-aria-label="New version of #{doc.name}"/>
+                                <button type="submit" class="btn btn-sm btn-secondary">Replace</button>
+                            </form>
+                            <span t-else="" class="small text-muted">Uploads closed</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </t>
+            <div t-if="pager" class="mt-3"><t t-call="portal.pager"/></div>
+        </t>
+    </template>
+</odoo>

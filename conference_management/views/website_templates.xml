@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="event_call_for_papers" name="Event: Call for Papers">
+        <t t-call="website_event.layout">
+            <div class="container py-4">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h1 class="h3">Call for Papers</h1>
+                        <p class="lead" t-out="event.name"/>
+                        <div t-if="event.is_cfp_open" class="alert alert-success d-flex flex-wrap align-items-center gap-2">
+                            <span class="me-auto">
+                                Submissions are open<t t-if="event.cfp_deadline"> until
+                                <strong t-out="event.cfp_deadline" t-options="{'widget': 'datetime', 'tz_name': event.date_tz}"/></t>.
+                            </span>
+                            <a t-attf-href="/my/submissions/new?event_id=#{event.id}" class="btn btn-primary">Submit a proposal</a>
+                        </div>
+                        <div t-else="" class="alert alert-secondary">Submissions are closed for this event.</div>
+                        <div t-if="event.cfp_instructions" t-field="event.cfp_instructions" class="mb-4"/>
+                        <h2 class="h5 mt-4">How it works</h2>
+                        <ol>
+                            <li>Sign in or create an account, then submit your title, abstract and any supporting file.</li>
+                            <li>The programme committee reviews every submission<t t-if="event.cfp_blind_review"> anonymously</t>.</li>
+                            <li>You receive the decision and reviewer comments by email, and can follow the status in your portal.</li>
+                            <li>Accepted speakers upload their slides from their portal before the event.</li>
+                        </ol>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3 class="h6">Already submitted?</h3>
+                                <p class="small text-muted mb-2">Check the status, read feedback, or upload a revised file.</p>
+                                <a href="/my/submissions" class="btn btn-outline-primary btn-sm">My submissions</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="event_materials" name="Event: Materials">
+        <t t-call="website_event.layout">
+            <div class="container py-4">
+                <h1 class="h3">Materials</h1>
+                <p class="text-muted">Slides, papers and handouts shared by the speakers and organizers of <t t-out="event.name"/>.</p>
+                <div t-if="is_public" class="alert alert-info">
+                    Registered attendees see more files after they <a t-attf-href="/web/login?redirect=/event/#{slug(event)}/materials">sign in</a>.
+                </div>
+                <p t-if="not sessions" class="text-muted">No materials are available yet.</p>
+                <div t-foreach="sessions.items()" t-as="item" class="card mb-3">
+                    <t t-set="track" t-value="item[0]"/>
+                    <t t-set="docs" t-value="item[1]"/>
+                    <div class="card-header">
+                        <t t-if="track">
+                            <strong t-out="track.name"/>
+                            <div class="small text-muted">
+                                <t t-if="track.partner_name" t-out="track.partner_name"/>
+                                <t t-if="track.date"> · <t t-out="track.date" t-options="{'widget': 'datetime', 'tz_name': event.date_tz}"/></t>
+                                <t t-if="track.location_id"> · <t t-out="track.location_id.name"/></t>
+                            </div>
+                        </t>
+                        <strong t-else="">General materials</strong>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li t-foreach="docs" t-as="doc" class="list-group-item d-flex flex-wrap align-items-center gap-2">
+                            <a t-att-href="doc._get_download_url()" class="me-auto"><i class="fa fa-download me-1"/><t t-out="doc.name"/></a>
+                            <span class="small text-muted"><span t-field="doc.document_type"/> · <t t-out="doc.file_size_display"/></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

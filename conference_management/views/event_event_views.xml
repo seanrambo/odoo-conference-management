@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="event_event_view_form_conference" model="ir.ui.view">
+        <field name="name">event.event.form.conference</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="event.view_event_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_av_pack" type="object" string="AV Pack"
+                        groups="event.group_event_user"
+                        help="Download approved slides as a ZIP, by room and day"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_conference_submissions" type="object" class="oe_stat_button"
+                        icon="fa-file-text-o" invisible="not cfp_enabled" groups="event.group_event_user">
+                    <field name="submission_count" string="Submissions" widget="statinfo"/>
+                </button>
+                <button name="action_view_conference_documents" type="object" class="oe_stat_button"
+                        icon="fa-folder-open-o" groups="event.group_event_user">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="document_count"/></span>
+                        <span class="o_stat_text" invisible="document_pending_count">Files</span>
+                        <span class="o_stat_text text-warning" invisible="not document_pending_count"><field name="document_pending_count"/> pending</span>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Conference" name="conference" groups="event.group_event_user">
+                    <group>
+                        <group string="Call for Papers">
+                            <field name="cfp_enabled"/>
+                            <field name="cfp_deadline" invisible="not cfp_enabled"/>
+                            <field name="is_cfp_open" invisible="not cfp_enabled"/>
+                            <field name="cfp_blind_review" invisible="not cfp_enabled"/>
+                            <field name="cfp_min_reviews" invisible="not cfp_enabled"/>
+                            <field name="cfp_reviewer_ids" widget="many2many_tags" invisible="not cfp_enabled"/>
+                        </group>
+                        <group string="Files and Uploads">
+                            <field name="doc_upload_enabled"/>
+                            <field name="doc_upload_deadline" invisible="not doc_upload_enabled"/>
+                            <field name="doc_attendee_upload" invisible="not doc_upload_enabled"/>
+                            <field name="doc_max_size_mb" invisible="not doc_upload_enabled"/>
+                            <field name="doc_allowed_extensions" invisible="not doc_upload_enabled"
+                                   placeholder="pdf,pptx,key,docx"/>
+                        </group>
+                    </group>
+                    <group invisible="not cfp_enabled">
+                        <field name="cfp_instructions" placeholder="Topics, format, length limits and anything authors need to know."/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="event_event_view_form_conference_website" model="ir.ui.view">
+        <field name="name">event.event.form.conference.website</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="website_event.event_event_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='website_menu']" position="after">
+                <label for="website_cfp" string="Call for Papers" class="me-1" invisible="not cfp_enabled"/>
+                <field name="website_cfp" class="me-3" invisible="not cfp_enabled"/>
+                <label for="website_materials" string="Materials" class="me-1"/>
+                <field name="website_materials" class="me-3"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

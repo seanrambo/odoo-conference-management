@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_groups_privilege_conference" model="res.groups.privilege">
+        <field name="name">Conference</field>
+        <field name="sequence">19</field>
+        <field name="category_id" ref="base.module_category_marketing"/>
+    </record>
+
+    <!-- Reviewers: internal users who only see the reviews assigned to them.
+         Organizers are Events users (event.group_event_user). -->
+    <record id="group_conference_reviewer" model="res.groups">
+        <field name="name">Reviewer</field>
+        <field name="sequence">10</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="privilege_id" ref="res_groups_privilege_conference"/>
+    </record>
+
+    <record id="event.group_event_user" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_conference_reviewer'))]"/>
+    </record>
+
+    <data noupdate="1">
+        <!-- Multi-company -->
+        <record id="conference_submission_company_rule" model="ir.rule">
+            <field name="name">Conference submission: multi-company</field>
+            <field name="model_id" ref="model_conference_submission"/>
+            <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+        </record>
+        <record id="conference_review_company_rule" model="ir.rule">
+            <field name="name">Conference review: multi-company</field>
+            <field name="model_id" ref="model_conference_review"/>
+            <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+        </record>
+        <record id="conference_document_company_rule" model="ir.rule">
+            <field name="name">Conference document: multi-company</field>
+            <field name="model_id" ref="model_conference_document"/>
+            <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+        </record>
+
+        <!-- Organizers see everything -->
+        <record id="conference_review_rule_organizer" model="ir.rule">
+            <field name="name">Conference review: organizers see all</field>
+            <field name="model_id" ref="model_conference_review"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('event.group_event_user'))]"/>
+        </record>
+        <record id="conference_document_rule_organizer" model="ir.rule">
+            <field name="name">Conference document: organizers see all</field>
+            <field name="model_id" ref="model_conference_document"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('event.group_event_user'))]"/>
+        </record>
+
+        <!-- Reviewers: own reviews and the files of those submissions -->
+        <record id="conference_review_rule_reviewer" model="ir.rule">
+            <field name="name">Conference review: reviewers see their own</field>
+            <field name="model_id" ref="model_conference_review"/>
+            <field name="domain_force">[('reviewer_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_conference_reviewer'))]"/>
+        </record>
+        <record id="conference_document_rule_reviewer" model="ir.rule">
+            <field name="name">Conference document: reviewers see files of assigned submissions</field>
+            <field name="model_id" ref="model_conference_document"/>
+            <field name="domain_force">[('submission_id.review_ids.reviewer_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_conference_reviewer'))]"/>
+        </record>
+
+        <!-- Portal: own records only -->
+        <record id="conference_submission_rule_portal" model="ir.rule">
+            <field name="name">Conference submission: portal sees own</field>
+            <field name="model_id" ref="model_conference_submission"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        </record>
+        <record id="conference_document_rule_portal" model="ir.rule">
+            <field name="name">Conference document: portal sees own</field>
+            <field name="model_id" ref="model_conference_document"/>
+            <field name="domain_force">[('partner_id', '=', user.partner_id.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        </record>
+    </data>
+</odoo>
