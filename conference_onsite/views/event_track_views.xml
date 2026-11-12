@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="event_track_view_form_onsite" model="ir.ui.view">
+        <field name="name">event.track.form.onsite</field>
+        <field name="model">event.track</field>
+        <field name="inherit_id" ref="website_event_track.view_event_track_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_onsite_attendance" type="object" class="oe_stat_button"
+                        icon="fa-users" groups="event.group_event_registration_desk">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="onsite_attendance_count"/>
+                            <t invisible="not onsite_seat_limit"> / <field name="onsite_seat_limit"/></t>
+                        </span>
+                        <span class="o_stat_text">Attended</span>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//field[@name='duration']" position="after">
+                <field name="onsite_seat_limit"/>
+                <field name="cpd_enabled" invisible="1"/>
+                <field name="cpd_points" invisible="not cpd_enabled"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="event_track_view_list_onsite" model="ir.ui.view">
+        <field name="name">event.track.list.onsite</field>
+        <field name="model">event.track</field>
+        <field name="inherit_id" ref="website_event_track.view_event_track_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_id']" position="after">
+                <field name="date" optional="show"/>
+                <field name="onsite_seat_limit" optional="hide"/>
+                <field name="onsite_attendance_count" optional="show"/>
+                <field name="cpd_points" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

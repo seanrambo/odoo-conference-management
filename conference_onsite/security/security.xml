@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Door and desk staff (Events / Registration Desk) see the Conference app,
+         but only its Event Day menu. -->
+    <record id="conference_management.menu_conference_root" model="ir.ui.menu">
+        <field name="group_ids" eval="[(4, ref('event.group_event_registration_desk'))]"/>
+    </record>
+
+    <data noupdate="1">
+        <record id="conference_session_attendance_company_rule" model="ir.rule">
+            <field name="name">Session attendance: multi-company</field>
+            <field name="model_id" ref="model_conference_session_attendance"/>
+            <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+        </record>
+    </data>
+</odoo>

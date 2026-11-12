@@ -1,0 +1,11 @@
+.o_conference_session_scanner {
+    .o_attendee_results {
+        bottom: 100%;
+        max-height: 50vh;
+        overflow-y: auto;
+        z-index: 10;
+    }
+    .o_scan_result .fa-2x {
+        line-height: 1;
+    }
+}

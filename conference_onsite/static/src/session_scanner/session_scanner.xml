@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="conference_onsite.SessionScanner">
+        <div class="o_event_barcode_bg o_home_menu_background o_conference_session_scanner">
+            <div class="o_event_barcode_main container d-flex flex-column h-100 h-sm-auto bg-view shadow">
+                <div class="d-flex align-items-center my-3">
+                    <a href="#" class="me-2" title="Back" t-on-click.prevent="onClickBack">
+                        <i class="oi oi-chevron-left fa-lg"/>
+                    </a>
+                    <span class="fs-3 me-auto text-start" t-out="state.data ? state.data.event_name : 'Session Scanner'"/>
+                    <span t-if="state.data" class="badge text-bg-light fs-6" title="Checked in to the event">
+                        <i class="fa fa-check-square-o me-1"/><t t-out="state.data.checkin_count"/> / <t t-out="state.data.expected_count"/>
+                    </span>
+                </div>
+
+                <!-- Step 1: pick an event -->
+                <t t-if="!state.data">
+                    <p class="text-muted text-start">Pick the event you are scanning for.</p>
+                    <div class="list-group text-start">
+                        <button t-foreach="state.events" t-as="event" t-key="event.id" type="button"
+                                class="list-group-item list-group-item-action py-3"
+                                t-on-click="() => this.onPickEvent(event.id)">
+                            <div class="fw-bold" t-out="event.name"/>
+                            <small class="text-muted" t-out="event.dates"/>
+                        </button>
+                    </div>
+                    <p t-if="!state.events.length" class="text-muted mt-4">
+                        No current or upcoming events have scheduled sessions.
+                    </p>
+                </t>
+
+                <!-- Step 2: pick a session and scan -->
+                <t t-else="">
+                    <select class="form-select form-select-lg o_session_select" t-on-change="onSessionChange">
+                        <option value="" t-att-selected="!state.sessionId">Choose a session…</option>
+                        <optgroup t-foreach="sessionsByDay" t-as="day" t-key="day.label" t-att-label="day.label">
+                            <option t-foreach="day.sessions" t-as="s" t-key="s.id" t-att-value="s.id"
+                                    t-att-selected="s.id === state.sessionId" t-att-disabled="s.is_cancelled">
+                                <t t-out="s.start"/>–<t t-out="s.end"/> · <t t-out="s.name"/><t t-if="s.location"> · <t t-out="s.location"/></t><t t-if="s.is_cancelled"> (cancelled)</t><t t-if="s.is_live"> ● live</t>
+                            </option>
+                        </optgroup>
+                    </select>
+                    <p t-if="!state.data.sessions.length" class="text-muted mt-3">
+                        This event has no scheduled sessions yet. Give sessions a date in the agenda first.
+                    </p>
+
+                    <t t-if="session">
+                        <div class="d-flex justify-content-center align-items-baseline gap-2 mt-3 o_session_counter">
+                            <span class="display-5 fw-bold" t-out="session.count"/>
+                            <span class="fs-5 text-muted">
+                                <t t-if="session.seat_limit">/ <t t-out="session.seat_limit"/> seats</t>
+                                <t t-else="">in the room</t>
+                            </span>
+                        </div>
+
+                        <div t-if="state.result" t-att-class="'o_scan_result rounded p-3 mt-3 text-start ' + resultClass">
+                            <div class="d-flex align-items-start gap-3">
+                                <i t-att-class="'fa fa-2x ' + resultIcon"/>
+                                <div class="flex-grow-1">
+                                    <div t-if="state.result.attendee" class="fs-4 fw-bold" t-out="state.result.attendee.name"/>
+                                    <div t-if="state.result.attendee and (state.result.attendee.company or state.result.attendee.ticket)" class="opacity-75">
+                                        <t t-out="state.result.attendee.company"/><t t-if="state.result.attendee.company and state.result.attendee.ticket"> · </t><t t-out="state.result.attendee.ticket"/>
+                                    </div>
+                                    <div class="mt-1" t-out="state.result.message"/>
+                                </div>
+                            </div>
+                            <div t-if="state.result.can_force" class="d-flex gap-2 mt-3">
+                                <button class="btn btn-dark flex-grow-1" t-att-disabled="state.busy" t-on-click="onForce">Let them in</button>
+                                <button class="btn btn-light flex-grow-1" t-on-click="onDismiss">Turn away</button>
+                            </div>
+                        </div>
+
+                        <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center">
+                            <BarcodeScanner onBarcodeScanned="(barcode) => this.onBarcodeScanned(barcode)"/>
+                            <h5 class="mt-5 text-muted">Scan a badge</h5>
+                        </div>
+
+                        <div class="position-relative text-start mb-2">
+                            <input type="search" class="form-control form-control-lg o_attendee_search"
+                                   placeholder="No badge? Search by name, email or company"
+                                   t-att-value="state.searchTerm" t-on-input="onSearchInput"/>
+                            <div t-if="state.searchResults.length" class="list-group position-absolute w-100 shadow o_attendee_results">
+                                <button t-foreach="state.searchResults" t-as="attendee" t-key="attendee.id" type="button"
+                                        class="list-group-item list-group-item-action"
+                                        t-on-click="() => this.onPickAttendee(attendee)">
+                                    <div class="fw-bold" t-out="attendee.name"/>
+                                    <small class="text-muted">
+                                        <t t-out="attendee.email"/><t t-if="attendee.company"> · <t t-out="attendee.company"/></t>
+                                    </small>
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>

@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_conference_session_attendance_desk,conference.session.attendance.desk,model_conference_session_attendance,event.group_event_registration_desk,1,0,1,1
+access_conference_session_attendance_user,conference.session.attendance.user,model_conference_session_attendance,event.group_event_user,1,1,1,1
+access_event_track_location_desk,event.track.location.desk,website_event_track.model_event_track_location,event.group_event_registration_desk,1,0,0,0

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="event_registration_view_form_onsite" model="ir.ui.view">
+        <field name="name">event.registration.form.onsite</field>
+        <field name="model">event.registration</field>
+        <field name="inherit_id" ref="event.view_event_registration_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Sessions Attended" name="onsite_sessions" invisible="not onsite_session_count">
+                    <field name="onsite_attendance_ids" readonly="1">
+                        <list>
+                            <field name="track_id"/>
+                            <field name="location_id"/>
+                            <field name="scan_date"/>
+                            <field name="method" optional="hide"/>
+                            <field name="cpd_points" sum="Total" column_invisible="not parent.cpd_points_total"/>
+                        </list>
+                    </field>
+                    <group>
+                        <field name="onsite_session_count"/>
+                        <field name="cpd_points_total" invisible="not cpd_points_total"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="event_registration_view_list_onsite" model="ir.ui.view">
+        <field name="name">event.registration.list.onsite</field>
+        <field name="model">event.registration</field>
+        <field name="inherit_id" ref="event.view_event_registration_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="onsite_session_count" optional="hide"/>
+                <field name="cpd_points_total" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

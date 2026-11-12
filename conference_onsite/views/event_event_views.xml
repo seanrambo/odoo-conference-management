@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="event_event_view_form_onsite" model="ir.ui.view">
+        <field name="name">event.event.form.onsite</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="conference_management.event_event_view_form_conference"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_session_scanner" type="object" string="Session Scanner"
+                        invisible="not seats_taken" groups="event.group_event_registration_desk"
+                        help="Scan badges at a session door to record attendance"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_onsite_checkins" type="object" class="oe_stat_button"
+                        icon="fa-check-square-o" invisible="not onsite_expected_count"
+                        groups="event.group_event_registration_desk">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="onsite_checkin_count"/> / <field name="onsite_expected_count"/></span>
+                        <span class="o_stat_text">Checked In</span>
+                    </div>
+                </button>
+                <button name="action_view_onsite_attendance" type="object" class="oe_stat_button"
+                        icon="fa-users" invisible="not onsite_session_attendance_count"
+                        groups="event.group_event_registration_desk">
+                    <field name="onsite_session_attendance_count" string="Session Scans" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='conference']" position="after">
+                <page string="Event Day" name="conference_onsite" groups="event.group_event_user">
+                    <group>
+                        <group string="Session Scanning">
+                            <field name="onsite_scan_margin"/>
+                            <field name="onsite_session_checkin"/>
+                        </group>
+                        <group string="Session Changes">
+                            <field name="onsite_notify_changes"/>
+                        </group>
+                        <group string="CPD">
+                            <field name="cpd_enabled"/>
+                            <field name="cpd_label" invisible="not cpd_enabled"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

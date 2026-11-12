@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_session_scanner" model="ir.actions.client">
+        <field name="name">Session Scanner</field>
+        <field name="tag">conference_onsite.session_scanner</field>
+        <field name="target">fullscreen</field>
+        <field name="path">session-scanner</field>
+    </record>
+
+    <menuitem id="menu_conference_event_day" name="Event Day" parent="conference_management.menu_conference_root"
+              groups="event.group_event_registration_desk" sequence="35"/>
+    <menuitem id="menu_conference_registration_desk" name="Registration Desk" parent="menu_conference_event_day"
+              action="event.event_barcode_action_main_view" sequence="10"/>
+    <menuitem id="menu_conference_session_scanner" name="Session Scanner" parent="menu_conference_event_day"
+              action="action_session_scanner" sequence="20"/>
+    <menuitem id="menu_conference_session_attendance" name="Session Attendance" parent="menu_conference_event_day"
+              action="conference_session_attendance_action" groups="event.group_event_user" sequence="30"/>
+</odoo>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Rendered once per change by event.track._onsite_notify_change() and sent to each
+         affected person separately. ctx['onsite_changes'] lists {label, old, new}. -->
+    <record id="mail_template_session_changed" model="mail.template">
+        <field name="name">Conference: session time or room changed</field>
+        <field name="model_id" ref="website_event_track.model_event_track"/>
+        <field name="subject">Change to {{ object.name }} at {{ object.event_id.name }}</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.event_id.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello,</p>
+    <p>A session on your agenda at <strong t-out="object.event_id.name or ''">the event</strong> has changed:
+        <strong t-out="object.name or ''">the session</strong>.</p>
+    <table style="border-collapse: collapse; margin: 12px 0;">
+        <tr t-foreach="ctx.get('onsite_changes') or []" t-as="change">
+            <td style="padding: 6px 12px 6px 0; color: #5b6478; vertical-align: top;" t-out="change['label']">Time</td>
+            <td style="padding: 6px 0;">
+                <span style="text-decoration: line-through; color: #5b6478;" t-out="change['old']">Old</span><br/>
+                <strong t-out="change['new']">New</strong>
+            </td>
+        </tr>
+    </table>
+    <p>Times are in <t t-out="object.event_id.date_tz or 'UTC'">UTC</t>.</p>
+    <p t-if="object.website_url"><a t-att-href="object.get_base_url() + object.website_url" style="color: #00707d;">See the session</a></p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_session_cancelled" model="mail.template">
+        <field name="name">Conference: session cancelled</field>
+        <field name="model_id" ref="website_event_track.model_event_track"/>
+        <field name="subject">Cancelled: {{ object.name }} at {{ object.event_id.name }}</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.event_id.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello,</p>
+    <p>We are sorry: <strong t-out="object.name or ''">the session</strong>
+        <t t-if="ctx.get('onsite_before_when')">, planned for <t t-out="ctx.get('onsite_before_when')">Monday</t> (<t t-out="object.event_id.date_tz or 'UTC'">UTC</t>),</t>
+        has been cancelled.</p>
+    <p>The rest of <strong t-out="object.event_id.name or ''">the event</strong> goes ahead as planned.</p>
+    <p t-if="object.event_id.website_url"><a t-att-href="object.event_id.get_base_url() + object.event_id.website_url" style="color: #00707d;">See the full agenda</a></p>
+</div>
+        </field>
+    </record>
+</odoo>
