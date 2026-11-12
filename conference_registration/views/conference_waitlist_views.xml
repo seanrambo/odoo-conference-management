@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="conference_waitlist_view_list" model="ir.ui.view">
+        <field name="name">conference.waitlist.list</field>
+        <field name="model">conference.waitlist</field>
+        <field name="arch" type="xml">
+            <list string="Waitlist" decoration-muted="state in ('expired', 'cancelled')" decoration-success="state == 'booked'">
+                <field name="create_date" string="Joined" widget="datetime"/>
+                <field name="position"/>
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone" optional="hide"/>
+                <field name="event_id" optional="show"/>
+                <field name="event_ticket_id" optional="show"/>
+                <field name="offer_deadline" optional="show"/>
+                <field name="state" widget="badge" decoration-info="state == 'waiting'"
+                       decoration-warning="state == 'offered'" decoration-success="state == 'booked'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="conference_waitlist_view_form" model="ir.ui.view">
+        <field name="name">conference.waitlist.form</field>
+        <field name="model">conference.waitlist</field>
+        <field name="arch" type="xml">
+            <form string="Waitlist Entry">
+                <header>
+                    <button name="action_offer_now" type="object" string="Offer Seat Now" class="btn-primary"
+                            invisible="state != 'waiting'"
+                            confirm="Offer a seat to this person now, ahead of the queue? Make sure a seat is free."/>
+                    <button name="action_cancel" type="object" string="Remove from Waitlist"
+                            invisible="state not in ('waiting', 'offered')"/>
+                    <button name="action_reset_waiting" type="object" string="Back to Waiting"
+                            invisible="state not in ('expired', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="waiting,offered,booked"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group>
+                            <field name="event_id"/>
+                            <field name="event_ticket_id"/>
+                            <field name="position" invisible="state != 'waiting'"/>
+                            <field name="offer_date" invisible="not offer_date"/>
+                            <field name="offer_deadline" invisible="not offer_deadline"/>
+                            <field name="sale_order_id" invisible="not sale_order_id"/>
+                            <field name="registration_id" invisible="not registration_id"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="conference_waitlist_view_search" model="ir.ui.view">
+        <field name="name">conference.waitlist.search</field>
+        <field name="model">conference.waitlist</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('email', 'ilike', self)]"/>
+                <field name="event_id"/>
+                <filter name="active" string="Waiting or Offered" domain="[('state', 'in', ('waiting', 'offered'))]"/>
+                <filter name="offered" string="Seat Offered" domain="[('state', '=', 'offered')]"/>
+                <separator/>
+                <filter name="group_event" string="Event" context="{'group_by': 'event_id'}"/>
+                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="conference_waitlist_action" model="ir.actions.act_window">
+        <field name="name">Waitlist</field>
+        <field name="res_model">conference.waitlist</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nobody is waiting</p>
+            <p>When an event with limited seats sells out, visitors can join its waitlist from the event page.</p>
+        </field>
+    </record>
+</odoo>

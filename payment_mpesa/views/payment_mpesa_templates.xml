@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="inline_form">
+        <t t-set="mpesa_partner" t-value="request.env['res.partner'].sudo().browse(partner_id).exists() if partner_id else None"/>
+        <div t-attf-id="o_mpesa_container_{{provider_id}}" class="o_mpesa_inline_form">
+            <label class="form-label small" t-attf-for="o_mpesa_phone_{{provider_id}}">M-Pesa phone number</label>
+            <input type="tel" class="form-control o_mpesa_phone" t-attf-id="o_mpesa_phone_{{provider_id}}"
+                   autocomplete="tel" inputmode="tel" placeholder="0712 345 678"
+                   t-att-value="mpesa_partner and mpesa_partner.phone or ''"/>
+            <div class="form-text">You will get a prompt on this phone. Enter your M-Pesa PIN to pay.</div>
+        </div>
+    </template>
+</odoo>

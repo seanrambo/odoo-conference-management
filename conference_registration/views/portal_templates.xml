@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_my_home_tickets" name="Conference: my tickets"
+              inherit_id="conference_management.portal_my_home_conference" priority="41">
+        <div id="portal_service_category" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/conference_registration/static/description/icon.png'"/>
+                <t t-set="title">My Event Tickets</t>
+                <t t-set="text">Download tickets, transfer them, cancel, or get a visa letter</t>
+                <t t-set="url" t-value="'/my/tickets'"/>
+                <t t-set="placeholder_count" t-value="'conference_ticket_count'"/>
+            </t>
+        </div>
+    </template>
+
+    <template id="portal_breadcrumbs_tickets" name="Tickets breadcrumbs"
+              inherit_id="portal.portal_breadcrumbs" priority="41">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'conference_tickets'" class="breadcrumb-item active">Event Tickets</li>
+        </xpath>
+    </template>
+
+    <template id="portal_my_tickets" name="My Event Tickets">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Event Tickets</t>
+            </t>
+            <p t-if="not registrations" class="alert alert-light">You have no event tickets yet.</p>
+            <t t-if="registrations" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Event</th>
+                        <th>Attendee</th>
+                        <th class="d-none d-md-table-cell">Date</th>
+                        <th>Status</th>
+                        <th class="text-end"/>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="registrations" t-as="reg">
+                        <td t-out="reg.event_id.name"/>
+                        <td t-out="reg.name"/>
+                        <td class="d-none d-md-table-cell"><span t-out="reg.event_id.date_begin" t-options="{'widget': 'date', 'tz_name': reg.event_id.date_tz}"/></td>
+                        <td><span t-field="reg.state"/></td>
+                        <td class="text-end"><a t-att-href="reg._get_manage_url()">Manage</a></td>
+                    </tr>
+                </tbody>
+            </t>
+            <div t-if="pager" class="mt-3"><t t-call="portal.pager"/></div>
+        </t>
+    </template>
+</odoo>

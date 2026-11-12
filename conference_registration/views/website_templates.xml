@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- "Join the waitlist" under the Sold Out notice on the event page -->
+    <template id="registration_template_waitlist" inherit_id="website_event.registration_template">
+        <xpath expr="//b[text()='Sold Out']" position="after">
+            <t t-if="event.waitlist_enabled">
+                <br/><a t-attf-href="/event/#{event.id}/waitlist" class="alert-link">Join the waitlist</a>
+                and we will email you if a seat frees up.
+            </t>
+        </xpath>
+    </template>
+
+    <template id="conference_alerts" name="Conference registration alerts">
+        <div t-if="error" class="alert alert-danger" role="alert" t-out="error"/>
+        <div t-if="message" class="alert alert-success" role="status" t-out="message"/>
+    </template>
+
+    <template id="event_summary" name="Event summary line">
+        <p class="text-muted mb-4">
+            <t t-out="event.date_begin" t-options="{'widget': 'datetime', 'tz_name': event.date_tz, 'format': 'd MMMM y, HH:mm'}"/>
+            <t t-set="venue" t-value="event.sudo().address_id"/>
+            <t t-if="venue"> · <t t-out="venue.name"/></t>
+        </p>
+    </template>
+
+    <!-- Waitlist -->
+    <template id="waitlist_join_page" name="Join the waitlist">
+        <t t-call="website.layout">
+            <div class="container py-5" style="max-width: 720px;">
+                <h1 class="h3">Join the waitlist</h1>
+                <p class="lead mb-1" t-out="event.name"/>
+                <t t-call="conference_registration.event_summary"/>
+                <t t-call="conference_registration.conference_alerts"/>
+                <p>This event is full. Leave your details and we will email you as soon as a seat frees up.
+                    <t t-if="event.waitlist_offer_hours">You then have <t t-out="event.waitlist_offer_hours"/> hours to take it.</t></p>
+                <form t-attf-action="/event/#{event.id}/waitlist" method="post" class="card card-body">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <div class="d-none" aria-hidden="true">
+                        <label for="cr_website_url">Leave this field empty</label>
+                        <input type="text" id="cr_website_url" name="website_url" tabindex="-1" autocomplete="off"/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="cr_name">Full name</label>
+                        <input class="form-control" id="cr_name" name="name" required="required" maxlength="200"
+                               t-att-value="partner and partner.name or ''"/>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="cr_email">Email</label>
+                            <input type="email" class="form-control" id="cr_email" name="email" required="required"
+                                   t-att-value="partner and partner.email or ''"/>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="cr_phone">Phone <span class="text-muted">(optional)</span></label>
+                            <input type="tel" class="form-control" id="cr_phone" name="phone"
+                                   t-att-value="partner and partner.phone or ''"/>
+                        </div>
+                    </div>
+                    <div class="mb-3" t-if="tickets">
+                        <label class="form-label" for="cr_ticket">Ticket</label>
+                        <select class="form-select" id="cr_ticket" name="ticket_id" required="required">
+                            <t t-foreach="tickets" t-as="ticket">
+                                <option t-att-value="ticket.id"><t t-out="ticket.name"/><t t-if="ticket.price"> · <t t-out="ticket.price" t-options="{'widget': 'monetary', 'display_currency': ticket.currency_id}"/></t></option>
+                            </t>
+                        </select>
+                    </div>
+                    <div><button type="submit" class="btn btn-primary">Join the waitlist</button></div>
+                </form>
+            </div>
+        </t>
+    </template>
+
+    <template id="waitlist_status_page" name="Waitlist status">
+        <t t-call="website.layout">
+            <div class="container py-5" style="max-width: 720px;">
+                <h1 class="h3" t-out="event.name"/>
+                <t t-call="conference_registration.event_summary"/>
+                <t t-call="conference_registration.conference_alerts"/>
+                <div class="card card-body">
+                    <t t-if="entry.state == 'waiting'">
+                        <h2 class="h5">You are on the waitlist</h2>
+                        <p class="mb-3">Your position: <strong t-out="entry.position"/>. We will email <strong t-out="entry.email"/> if a seat frees up.</p>
+                    </t>
+                    <t t-elif="entry.state == 'offered' and not expired">
+                        <h2 class="h5">A seat is yours to take</h2>
+                        <p>We are holding it until
+                            <strong t-out="entry.offer_deadline" t-options="{'widget': 'datetime', 'tz_name': event.date_tz, 'format': 'd MMMM y, HH:mm'}"/>.
+                            Pay for your ticket before then to confirm your place.</p>
+                        <form t-attf-action="/event/waitlist/#{entry.access_token}/claim" method="post" class="mb-3">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button type="submit" class="btn btn-primary">Take my seat and pay</button>
+                        </form>
+                    </t>
+                    <t t-elif="entry.state == 'booked'">
+                        <h2 class="h5">You have a seat</h2>
+                        <p>Your booking is confirmed.
+                            <a t-if="entry.registration_id" t-att-href="entry.registration_id._get_manage_url()">Manage your booking</a></p>
+                    </t>
+                    <t t-elif="entry.state == 'expired' or expired">
+                        <h2 class="h5">This offer has expired</h2>
+                        <p>The seat has passed to the next person on the list. Reply to our email if you would still like to attend.</p>
+                    </t>
+                    <t t-else="">
+                        <h2 class="h5">You have left the waitlist</h2>
+                        <p>We will not contact you about this event again.</p>
+                    </t>
+                    <form t-if="entry.state in ('waiting', 'offered')" t-attf-action="/event/waitlist/#{entry.access_token}/leave"
+                          method="post" onsubmit="return confirm('Leave the waitlist?');">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="btn btn-link p-0 text-danger">Leave the waitlist</button>
+                    </form>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Booking self-service -->
+    <template id="booking_page" name="Manage booking">
+        <t t-call="website.layout">
+            <t t-set="reg" t-value="registration"/>
+            <div class="container py-5" style="max-width: 820px;">
+                <p class="text-uppercase small fw-bold text-muted mb-1" style="letter-spacing: .3em;">Your booking</p>
+                <h1 class="h3" t-out="event.name"/>
+                <t t-call="conference_registration.event_summary"/>
+                <t t-call="conference_registration.conference_alerts"/>
+
+                <div class="card card-body mb-4">
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <div class="me-auto">
+                            <div class="fw-bold" t-out="reg.name"/>
+                            <div class="text-muted small"><t t-out="reg.email"/><t t-if="reg.event_ticket_id"> · <t t-out="reg.event_ticket_id.name"/></t></div>
+                        </div>
+                        <span t-if="reg.state == 'cancel'" class="badge text-bg-secondary">Cancelled</span>
+                        <span t-elif="reg.sale_status == 'to_pay'" class="badge text-bg-warning">Awaiting payment</span>
+                        <span t-else="" class="badge text-bg-success">Confirmed</span>
+                        <a t-if="reg.state in ('open', 'done')" t-att-href="reg._get_ticket_url()" class="btn btn-primary">Download ticket</a>
+                    </div>
+                </div>
+
+                <!-- Visa letter -->
+                <div t-if="event.visa_letter_enabled and reg.state != 'cancel'" class="card mb-4">
+                    <div class="card-header fw-bold">Visa invitation letter</div>
+                    <div class="card-body">
+                        <t t-if="reg.visa_letter_state == 'issued'">
+                            <p>Your letter <strong t-out="reg.visa_letter_reference"/> is ready.</p>
+                            <a t-attf-href="/event/booking/#{reg.conference_token}/visa-letter" class="btn btn-secondary">Download letter (PDF)</a>
+                        </t>
+                        <p t-elif="reg.visa_letter_state == 'requested'" class="mb-0">The organisers are reviewing your request. We will email you the letter.</p>
+                        <t t-elif="reg._conference_can_request_visa()">
+                            <div t-if="reg.visa_letter_state == 'rejected'" class="alert alert-warning">
+                                Your last request was declined: <t t-out="reg.visa_reject_reason"/>
+                            </div>
+                            <p class="text-muted small">Enter your details exactly as they appear in your passport.</p>
+                            <form t-attf-action="/event/booking/#{reg.conference_token}/visa" method="post">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" for="cr_visa_name">Full name as in passport</label>
+                                        <input class="form-control" id="cr_visa_name" name="visa_full_name" required="required"
+                                               t-att-value="reg.visa_full_name or reg.name"/>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" for="cr_visa_passport">Passport number</label>
+                                        <input class="form-control" id="cr_visa_passport" name="visa_passport_number" required="required"
+                                               t-att-value="reg.visa_passport_number"/>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" for="cr_visa_country">Nationality</label>
+                                        <select class="form-select" id="cr_visa_country" name="visa_nationality_id" required="required">
+                                            <option value="">Choose…</option>
+                                            <t t-foreach="countries" t-as="c">
+                                                <option t-att-value="c.id" t-att-selected="c == reg.visa_nationality_id" t-out="c.name"/>
+                                            </t>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" for="cr_visa_dob">Date of birth</label>
+                                        <input type="date" class="form-control" id="cr_visa_dob" name="visa_date_of_birth" required="required"
+                                               t-att-value="reg.visa_date_of_birth"/>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" for="cr_visa_expiry">Passport expiry</label>
+                                        <input type="date" class="form-control" id="cr_visa_expiry" name="visa_passport_expiry" required="required"
+                                               t-att-value="reg.visa_passport_expiry"/>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-secondary">Request letter</button>
+                            </form>
+                        </t>
+                        <p t-else="" class="mb-0 text-muted">You can request a letter once your booking is confirmed and paid.</p>
+                    </div>
+                </div>
+
+                <!-- Transfer -->
+                <div t-if="event.transfer_enabled and reg.state != 'cancel'" class="card mb-4">
+                    <div class="card-header fw-bold">Pass your ticket to someone else</div>
+                    <div class="card-body">
+                        <t t-if="reg._conference_can_transfer()">
+                            <p class="text-muted small">Your ticket will stop working and the new attendee receives their own. This cannot be undone from this page.</p>
+                            <form t-attf-action="/event/booking/#{reg.conference_token}/transfer" method="post"
+                                  onsubmit="return confirm('Transfer your ticket? Your own ticket will stop working.');">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" for="cr_tr_name">Their name</label>
+                                        <input class="form-control" id="cr_tr_name" name="name" required="required"/>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" for="cr_tr_email">Their email</label>
+                                        <input type="email" class="form-control" id="cr_tr_email" name="email" required="required"/>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" for="cr_tr_phone">Their phone <span class="text-muted">(optional)</span></label>
+                                        <input type="tel" class="form-control" id="cr_tr_phone" name="phone"/>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-secondary">Transfer ticket</button>
+                            </form>
+                        </t>
+                        <p t-else="" class="mb-0 text-muted">Transfers closed <t t-out="event.transfer_deadline_hours"/> hours before the event starts.</p>
+                    </div>
+                </div>
+
+                <!-- Cancel -->
+                <div t-if="event.self_cancel_enabled and reg.state != 'cancel'" class="card mb-4">
+                    <div class="card-header fw-bold">Cancel your booking</div>
+                    <div class="card-body">
+                        <p t-if="event.cancel_policy" class="small" style="white-space: pre-wrap;" t-out="event.cancel_policy"/>
+                        <t t-if="reg._conference_can_cancel()">
+                            <p t-if="reg._is_paid_booking()" class="small text-muted">We will pass your refund request to the organisers under the policy above.</p>
+                            <form t-attf-action="/event/booking/#{reg.conference_token}/cancel" method="post"
+                                  onsubmit="return confirm('Cancel your booking? Your ticket will stop working.');">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="btn btn-outline-danger">Cancel my booking</button>
+                            </form>
+                        </t>
+                        <p t-else="" class="mb-0 text-muted">Online cancellation closed <t t-out="event.cancel_deadline_hours"/> hours before the event starts. Please contact the organisers.</p>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="booking_transferred" name="Ticket transferred">
+        <t t-call="website.layout">
+            <div class="container py-5" style="max-width: 720px;">
+                <h1 class="h3">Ticket transferred</h1>
+                <p>Your ticket for <strong t-out="event.name"/> is now in the name of <strong t-out="new_name"/>. We have emailed them their ticket. Your own ticket and booking link no longer work.</p>
+            </div>
+        </t>
+    </template>
+
+    <template id="booking_not_found" name="Booking not found">
+        <t t-call="website.layout">
+            <div class="container py-5" style="max-width: 720px;">
+                <h1 class="h3">This booking link no longer works</h1>
+                <p>The ticket may have been transferred to someone else. If you think this is a mistake, contact the event organisers.</p>
+            </div>
+        </t>
+    </template>
+
+    <template id="visa_verify_page" name="Visa letter verification">
+        <t t-call="website.layout">
+            <div class="container py-5" style="max-width: 720px;">
+                <h1 class="h3">Invitation letter check</h1>
+                <t t-if="valid">
+                    <div class="alert alert-success" role="status">
+                        Letter <strong t-out="reference"/> is genuine and the registration is confirmed.
+                    </div>
+                    <dl class="row">
+                        <dt class="col-sm-4">Name</dt><dd class="col-sm-8" t-out="registration.visa_full_name"/>
+                        <dt class="col-sm-4">Passport</dt><dd class="col-sm-8" t-out="registration._visa_masked_passport()"/>
+                        <dt class="col-sm-4">Nationality</dt><dd class="col-sm-8" t-out="registration.visa_nationality_id.name"/>
+                        <dt class="col-sm-4">Event</dt><dd class="col-sm-8" t-out="registration.event_id.name"/>
+                        <dt class="col-sm-4">Dates</dt>
+                        <dd class="col-sm-8">
+                            <t t-out="registration.event_id.date_begin" t-options="{'widget': 'date', 'tz_name': registration.event_id.date_tz, 'format': 'd MMMM y'}"/> to
+                            <t t-out="registration.event_id.date_end" t-options="{'widget': 'date', 'tz_name': registration.event_id.date_tz, 'format': 'd MMMM y'}"/>
+                        </dd>
+                        <dt class="col-sm-4">Issued</dt>
+                        <dd class="col-sm-8"><t t-out="registration.visa_letter_date" t-options="{'widget': 'date', 'format': 'd MMMM y'}"/></dd>
+                    </dl>
+                </t>
+                <div t-else="" class="alert alert-danger" role="alert">
+                    We could not verify letter <strong t-out="reference"/>. It may have been withdrawn, or the address may be incomplete. Contact the organisers to check.
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

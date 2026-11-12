@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_visa_letter" model="ir.actions.report">
+        <field name="name">Visa Invitation Letter</field>
+        <field name="model">event.registration</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">conference_registration.visa_letter_document</field>
+        <field name="report_file">conference_registration.visa_letter_document</field>
+        <field name="print_report_name">'Invitation letter - %s' % (object.visa_full_name or object.name)</field>
+        <field name="binding_model_id" ref="event.model_event_registration"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="visa_letter_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="reg">
+                <t t-set="event" t-value="reg.event_id"/>
+                <t t-set="company" t-value="event.company_id or res_company"/>
+                <t t-call="web.external_layout">
+                    <t t-set="o" t-value="reg"/>
+                    <div class="page" style="font-size: 11pt; line-height: 1.55;">
+                        <p class="text-end">
+                            <t t-out="reg.visa_letter_date or context_timestamp(datetime.datetime.now()).date()"
+                               t-options="{'widget': 'date', 'format': 'd MMMM y'}"/><br/>
+                            Reference: <strong t-out="reg.visa_letter_reference or 'DRAFT'"/>
+                        </p>
+                        <p>To the Visa Officer,<br/>Embassy or High Commission concerned</p>
+                        <h4 class="mt-4 mb-3">Letter of invitation: <t t-out="event.name"/></h4>
+                        <p>
+                            We confirm that <strong t-out="reg.visa_full_name"/>, born on
+                            <t t-out="reg.visa_date_of_birth" t-options="{'widget': 'date', 'format': 'd MMMM y'}"/>,
+                            a national of <t t-out="reg.visa_nationality_id.name"/>, holder of passport number
+                            <strong t-out="reg.visa_passport_number"/> (valid until
+                            <t t-out="reg.visa_passport_expiry" t-options="{'widget': 'date', 'format': 'd MMMM y'}"/>),
+                            is registered to attend <strong t-out="event.name"/>.
+                        </p>
+                        <p>
+                            The event takes place from
+                            <t t-out="event.date_begin" t-options="{'widget': 'date', 'format': 'd MMMM y', 'tz_name': event.date_tz}"/>
+                            to <t t-out="event.date_end" t-options="{'widget': 'date', 'format': 'd MMMM y', 'tz_name': event.date_tz}"/>
+                            <t t-if="event.address_id">at <t t-out="event.address_id._display_address(without_company=False).replace('\n', ', ')"/></t>.
+                        </p>
+                        <p>
+                            <t t-if="reg.sale_status == 'sold'">The registration is confirmed and the registration fee has been paid.</t>
+                            <t t-else="">The registration is confirmed.</t>
+                        </p>
+                        <div t-if="event.visa_letter_note" t-field="event.visa_letter_note"/>
+                        <p>
+                            This letter is issued at the attendee's request to support a visa application. It does not
+                            commit <t t-out="company.name"/> to any travel, accommodation or living costs, and it does not
+                            guarantee that a visa will be granted.
+                        </p>
+                        <p>Yours faithfully,</p>
+                        <div style="min-height: 70px;">
+                            <img t-if="event.visa_signature" t-att-src="image_data_uri(event.visa_signature)" style="max-height: 70px;" alt="Signature"/>
+                        </div>
+                        <p>
+                            <strong t-out="event.visa_signatory_name or ''"/><br/>
+                            <t t-out="event.visa_signatory_title or ''"/><br/>
+                            <t t-out="company.name"/>
+                        </p>
+                        <p t-if="reg.visa_letter_reference" class="mt-4 small text-muted">
+                            To verify this letter, visit <t t-out="reg._get_visa_verify_url()"/>
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

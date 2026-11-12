@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_conference_waitlist_organizer,conference.waitlist organizer,model_conference_waitlist,event.group_event_user,1,1,1,1
+access_conference_waitlist_desk,conference.waitlist desk,model_conference_waitlist,event.group_event_registration_desk,1,0,0,0
+access_conference_group_booking,conference.group.booking organizer,model_conference_group_booking,event.group_event_user,1,1,1,1
+access_conference_group_booking_line,conference.group.booking.line organizer,model_conference_group_booking_line,event.group_event_user,1,1,1,1

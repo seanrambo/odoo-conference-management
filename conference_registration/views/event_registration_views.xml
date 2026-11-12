@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="event_registration_view_form_conference" model="ir.ui.view">
+        <field name="name">event.registration.form.conference</field>
+        <field name="model">event.registration</field>
+        <field name="inherit_id" ref="event.view_event_registration_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_send_manage_link" type="object" string="Send Booking Link"
+                        invisible="not active or state == 'cancel'"/>
+                <button name="action_open_booking_page" type="object" string="Booking Page"
+                        invisible="not active"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Visa Letter" name="visa_letter" invisible="not visa_letter_state or visa_letter_state == 'none'">
+                    <div class="mb-2">
+                        <button name="action_visa_issue" type="object" string="Issue Letter" class="btn-primary"
+                                invisible="visa_letter_state not in ('requested', 'rejected')"/>
+                        <button name="action_visa_issue" type="object" string="Re-send Letter"
+                                invisible="visa_letter_state != 'issued'"/>
+                        <button name="action_visa_reject" type="object" string="Decline" class="ms-2"
+                                invisible="visa_letter_state != 'requested'"
+                                confirm="Decline this request? The attendee is emailed the reason."/>
+                        <button name="%(conference_registration.action_report_visa_letter)d" type="action"
+                                string="Preview PDF" class="ms-2"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="visa_letter_state" readonly="1"/>
+                            <field name="visa_letter_reference" invisible="not visa_letter_reference"/>
+                            <field name="visa_letter_date" invisible="not visa_letter_date"/>
+                        </group>
+                        <group>
+                            <field name="visa_full_name"/>
+                            <field name="visa_passport_number"/>
+                            <field name="visa_nationality_id"/>
+                            <field name="visa_date_of_birth"/>
+                            <field name="visa_passport_expiry"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="visa_reject_reason" invisible="visa_letter_state == 'issued'"
+                               placeholder="Required to decline. Sent to the attendee, e.g. 'The passport number does not match the scan you sent.'"/>
+                    </group>
+                </page>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-0" role="alert" invisible="not refund_requested">
+                    The attendee cancelled a paid ticket and asked for a refund. Check the cancellation policy and refund the order if it applies.
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="event_registration_view_list_conference" model="ir.ui.view">
+        <field name="name">event.registration.list.conference</field>
+        <field name="model">event.registration</field>
+        <field name="inherit_id" ref="event.view_event_registration_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="visa_letter_state" optional="hide"/>
+                <field name="transfer_count" optional="hide"/>
+                <field name="refund_requested" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="visa_letter_view_list" model="ir.ui.view">
+        <field name="name">event.registration.visa.list</field>
+        <field name="model">event.registration</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Visa Letters" create="false">
+                <header>
+                    <button name="action_visa_issue" type="object" string="Issue Letters"/>
+                </header>
+                <field name="event_id"/>
+                <field name="name"/>
+                <field name="visa_full_name"/>
+                <field name="visa_nationality_id"/>
+                <field name="visa_passport_number"/>
+                <field name="sale_status" optional="show"/>
+                <field name="visa_letter_reference" optional="show"/>
+                <field name="visa_letter_state" widget="badge" decoration-warning="visa_letter_state == 'requested'"
+                       decoration-success="visa_letter_state == 'issued'" decoration-danger="visa_letter_state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="visa_letter_action" model="ir.actions.act_window">
+        <field name="name">Visa Letters</field>
+        <field name="res_model">event.registration</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="visa_letter_view_list"/>
+        <field name="domain">[('visa_letter_state', '!=', 'none')]</field>
+        <field name="context">{'search_default_visa_to_review': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No visa letter requests</p>
+            <p>Turn on visa invitation letters on an event. Attendees request them from their booking page.</p>
+        </field>
+    </record>
+
+    <record id="event_registration_view_search_conference" model="ir.ui.view">
+        <field name="name">event.registration.search.conference</field>
+        <field name="model">event.registration</field>
+        <field name="inherit_id" ref="event.view_registration_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter name="visa_to_review" string="Visa Letters to Review" domain="[('visa_letter_state', '=', 'requested')]"/>
+                <filter name="refund_requested" string="Refund Requested" domain="[('refund_requested', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

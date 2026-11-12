@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="event_event_view_form_registration" model="ir.ui.view">
+        <field name="name">event.event.form.conference.registration</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="event.view_event_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_group_booking" type="object" string="Group Booking"
+                        groups="event.group_event_user"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_waitlist" type="object" class="oe_stat_button" icon="fa-hourglass-half"
+                        invisible="not waitlist_enabled" groups="event.group_event_user">
+                    <field name="waitlist_count" string="Waitlist" widget="statinfo"/>
+                </button>
+                <button name="action_view_visa_requests" type="object" class="oe_stat_button" icon="fa-id-card-o"
+                        invisible="not visa_letter_enabled" groups="event.group_event_user">
+                    <field name="visa_request_count" string="Visa Letters" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='conference']" position="after">
+                <page string="Bookings" name="conference_bookings" groups="event.group_event_user">
+                    <group>
+                        <group string="Waitlist">
+                            <field name="waitlist_enabled"/>
+                            <field name="waitlist_offer_hours" invisible="not waitlist_enabled"/>
+                            <div class="text-muted small" colspan="2" invisible="not waitlist_enabled">
+                                Needs "Limit Attendees". Free seats are booked straight away; paid seats are held
+                                and the person pays online before the offer expires.
+                            </div>
+                        </group>
+                        <group string="Self-service">
+                            <field name="transfer_enabled"/>
+                            <field name="transfer_deadline_hours" invisible="not transfer_enabled"/>
+                            <field name="self_cancel_enabled"/>
+                            <field name="cancel_deadline_hours" invisible="not self_cancel_enabled"/>
+                            <field name="cancel_policy" invisible="not self_cancel_enabled"
+                                   placeholder="e.g. Full refund up to 14 days before the event, 50% up to 3 days before."/>
+                        </group>
+                    </group>
+                    <group string="Visa Invitation Letters">
+                        <group>
+                            <field name="visa_letter_enabled"/>
+                            <field name="visa_letter_auto_issue" invisible="not visa_letter_enabled"/>
+                            <field name="visa_signatory_name" invisible="not visa_letter_enabled"/>
+                            <field name="visa_signatory_title" invisible="not visa_letter_enabled"/>
+                        </group>
+                        <group invisible="not visa_letter_enabled">
+                            <field name="visa_signature" widget="image" options="{'size': [240, 96]}"/>
+                        </group>
+                    </group>
+                    <group invisible="not visa_letter_enabled">
+                        <field name="visa_letter_note" placeholder="Optional paragraph added to every letter."/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

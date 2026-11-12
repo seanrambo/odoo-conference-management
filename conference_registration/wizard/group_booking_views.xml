@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="conference_group_booking_view_form" model="ir.ui.view">
+        <field name="name">conference.group.booking.form</field>
+        <field name="model">conference.group.booking</field>
+        <field name="arch" type="xml">
+            <form string="Group Booking">
+                <group>
+                    <group>
+                        <field name="event_id" readonly="1"/>
+                        <field name="partner_id" placeholder="Company or person who pays"/>
+                        <field name="default_ticket_id" options="{'no_create': True}"/>
+                    </group>
+                    <group>
+                        <field name="confirm_order"/>
+                        <field name="create_invoice" invisible="not confirm_order"/>
+                        <field name="attendee_count" string="Attendees"/>
+                    </group>
+                </group>
+                <label for="attendees_text"/>
+                <field name="attendees_text" nolabel="1"
+                       placeholder="Wanjiru Kamau, wanjiru@example.com, 0712 345 678&#10;Otieno Odhiambo, otieno@example.com"/>
+                <div class="mt-2 mb-3">
+                    <button name="action_load_attendees" type="object" string="Add to List" class="btn-secondary"
+                            invisible="not attendees_text"/>
+                </div>
+                <field name="line_ids">
+                    <list editable="bottom">
+                        <field name="name"/>
+                        <field name="email"/>
+                        <field name="phone"/>
+                        <field name="ticket_id" domain="[('event_id', '=', parent.event_id)]" options="{'no_create': True}"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_book" type="object" string="Book" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

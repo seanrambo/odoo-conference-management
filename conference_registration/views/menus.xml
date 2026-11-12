@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_conference_bookings" name="Bookings" parent="conference_management.menu_conference_root"
+              groups="event.group_event_user" sequence="35"/>
+    <menuitem id="menu_conference_registrations" name="Registrations" parent="menu_conference_bookings"
+              action="event.event_registration_action" sequence="10"/>
+    <menuitem id="menu_conference_waitlist" name="Waitlist" parent="menu_conference_bookings"
+              action="conference_waitlist_action" sequence="20"/>
+    <menuitem id="menu_conference_visa_letters" name="Visa Letters" parent="menu_conference_bookings"
+              action="visa_letter_action" sequence="30"/>
+</odoo>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ Waitlist ============ -->
+    <record id="mail_template_waitlist_joined" model="mail.template">
+        <field name="name">Conference: joined the waitlist</field>
+        <field name="model_id" ref="model_conference_waitlist"/>
+        <field name="subject">You are on the waitlist for {{ object.event_id.name }}</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p><strong t-out="object.event_id.name or ''">The event</strong> is full, so we have added you to the waitlist<t t-if="object.position"> at position <strong t-out="object.position"/></t>.</p>
+    <p>If a seat frees up, we will email you straight away. You will then have <t t-out="object.event_id.waitlist_offer_hours or 24"/> hours to take it.</p>
+    <p><a t-att-href="object._get_manage_url()" style="color: #00707d;">Check your place or leave the waitlist</a></p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_waitlist_offer" model="mail.template">
+        <field name="name">Conference: waitlist seat offered</field>
+        <field name="model_id" ref="model_conference_waitlist"/>
+        <field name="subject">A seat is free at {{ object.event_id.name }}: it is yours to take</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p>A seat has opened at <strong t-out="object.event_id.name or ''">the event</strong>, and we are holding it for you
+        until <strong t-out="format_datetime(object.offer_deadline, tz=object.event_id.date_tz, dt_format='d MMMM y, HH:mm')">tomorrow</strong>
+        (<t t-out="object.event_id.date_tz or 'UTC'"/>).</p>
+    <p>Pay for the ticket before then to confirm your place. After that, the seat goes to the next person on the list.</p>
+    <p><a t-att-href="object._get_manage_url()" style="background-color: #151d42; padding: 10px 18px; text-decoration: none; color: #ffffff; font-size: 14px;">Take my seat</a></p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_waitlist_booked" model="mail.template">
+        <field name="name">Conference: waitlist seat booked</field>
+        <field name="model_id" ref="model_conference_waitlist"/>
+        <field name="subject">You have a seat at {{ object.event_id.name }}</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p>Good news: a seat freed up at <strong t-out="object.event_id.name or ''">the event</strong> and we have registered you. Your ticket follows in a separate email.</p>
+    <p t-if="object.registration_id"><a t-att-href="object.registration_id._get_manage_url()" style="color: #00707d;">Manage your booking</a></p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_waitlist_expired" model="mail.template">
+        <field name="name">Conference: waitlist offer expired</field>
+        <field name="model_id" ref="model_conference_waitlist"/>
+        <field name="subject">Your seat offer for {{ object.event_id.name }} has expired</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p>The seat we held for you at <strong t-out="object.event_id.name or ''">the event</strong> was not paid for in time, so we have offered it to the next person on the list.</p>
+    <p>If you would still like to attend, reply to this email and we will see what we can do.</p>
+</div>
+        </field>
+    </record>
+
+    <!-- ============ Booking ============ -->
+    <record id="mail_template_manage_booking" model="mail.template">
+        <field name="name">Conference: manage your booking</field>
+        <field name="model_id" ref="event.model_event_registration"/>
+        <field name="subject">Your booking for {{ object.event_id.name }}</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ (object.email and '"%s" &lt;%s&gt;' % (object.name, object.email) or object.partner_id.email_formatted or '') }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p>Everything about your place at <strong t-out="object.event_id.name or ''">the event</strong> is on one page. From there you can:</p>
+    <ul>
+        <li>download your ticket</li>
+        <li t-if="object.event_id.transfer_enabled">pass your ticket to a colleague</li>
+        <li t-if="object.event_id.self_cancel_enabled">cancel your booking</li>
+        <li t-if="object.event_id.visa_letter_enabled">request a visa invitation letter</li>
+    </ul>
+    <p><a t-att-href="object._get_manage_url()" style="background-color: #151d42; padding: 10px 18px; text-decoration: none; color: #ffffff; font-size: 14px;">Manage my booking</a></p>
+    <p style="color: #4f5a7d; font-size: 12px;">Keep this email: the link is personal to you.</p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_ticket_transferred_out" model="mail.template">
+        <field name="name">Conference: ticket transferred (previous holder)</field>
+        <field name="model_id" ref="event.model_event_registration"/>
+        <field name="subject">Your ticket for {{ object.event_id.name }} has been transferred</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ ctx.get('previous_email') or object.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="ctx.get('previous_name') or object.name or ''">there</t>,</p>
+    <p>Your ticket for <strong t-out="object.event_id.name or ''">the event</strong> is now in the name of <strong t-out="ctx.get('new_name') or ''">your colleague</strong>. Your old ticket no longer works at check-in.</p>
+    <p>If you did not ask for this, reply to this email straight away.</p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_ticket_transferred_in" model="mail.template">
+        <field name="name">Conference: ticket transferred (new holder)</field>
+        <field name="model_id" ref="event.model_event_registration"/>
+        <field name="subject">A ticket for {{ object.event_id.name }} is now yours</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p>A ticket for <strong t-out="object.event_id.name or ''">the event</strong> has been transferred to you.</p>
+    <p>
+        <a t-att-href="object._get_ticket_url()" style="background-color: #151d42; padding: 10px 18px; text-decoration: none; color: #ffffff; font-size: 14px;">Download my ticket</a>
+    </p>
+    <p><a t-att-href="object._get_manage_url()" style="color: #00707d;">Manage my booking</a></p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_booking_cancelled" model="mail.template">
+        <field name="name">Conference: booking cancelled</field>
+        <field name="model_id" ref="event.model_event_registration"/>
+        <field name="subject">Your booking for {{ object.event_id.name }} is cancelled</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p>We have cancelled your booking for <strong t-out="object.event_id.name or ''">the event</strong>. Your ticket no longer works at check-in.</p>
+    <p t-if="ctx.get('refund_requested')">We have passed your refund request to the organisers. They will be in touch under the event's cancellation policy.</p>
+    <p>We hope to see you at a future event.</p>
+</div>
+        </field>
+    </record>
+
+    <!-- ============ Visa letters ============ -->
+    <record id="mail_template_visa_issued" model="mail.template">
+        <field name="name">Conference: visa invitation letter issued</field>
+        <field name="model_id" ref="event.model_event_registration"/>
+        <field name="subject">Your invitation letter for {{ object.event_id.name }}</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="report_template_ids" eval="[(4, ref('conference_registration.action_report_visa_letter'))]"/>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.visa_full_name or object.name or ''">there</t>,</p>
+    <p>Your visa invitation letter for <strong t-out="object.event_id.name or ''">the event</strong> is attached (reference <t t-out="object.visa_letter_reference or ''"/>).</p>
+    <p>Embassies can check that it is genuine at the address printed at the foot of the letter.</p>
+    <p><a t-att-href="object._get_manage_url()" style="color: #00707d;">Manage my booking</a></p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_visa_rejected" model="mail.template">
+        <field name="name">Conference: visa invitation letter declined</field>
+        <field name="model_id" ref="event.model_event_registration"/>
+        <field name="subject">About your invitation letter for {{ object.event_id.name }}</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p>We could not issue your visa invitation letter for <strong t-out="object.event_id.name or ''">the event</strong> yet:</p>
+    <p style="border-left: 3px solid #c9d3e2; padding-left: 8px; white-space: pre-wrap;" t-out="object.visa_reject_reason or ''">Reason</p>
+    <p>You can correct your details and request it again from your booking page.</p>
+    <p><a t-att-href="object._get_manage_url()" style="color: #00707d;">Manage my booking</a></p>
+</div>
+        </field>
+    </record>
+</odoo>

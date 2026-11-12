@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="payment_provider_form_mpesa" model="ir.ui.view">
+        <field name="name">M-Pesa Provider Form</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <group name="provider_credentials" position="inside">
+                <group name="mpesa_credentials" invisible="code != 'mpesa'">
+                    <field name="mpesa_transaction_type" required="code == 'mpesa' and state != 'disabled'"/>
+                    <field name="mpesa_shortcode" required="code == 'mpesa' and state != 'disabled'"/>
+                    <field name="mpesa_till_number"
+                           invisible="mpesa_transaction_type != 'CustomerBuyGoodsOnline'"
+                           required="code == 'mpesa' and state != 'disabled' and mpesa_transaction_type == 'CustomerBuyGoodsOnline'"/>
+                    <field name="mpesa_consumer_key" required="code == 'mpesa' and state != 'disabled'" groups="base.group_system"/>
+                    <field name="mpesa_consumer_secret" password="True" required="code == 'mpesa' and state != 'disabled'" groups="base.group_system"/>
+                    <field name="mpesa_passkey" password="True" required="code == 'mpesa' and state != 'disabled'" groups="base.group_system"/>
+                    <div class="text-muted small" colspan="2">
+                        Test mode uses the Daraja sandbox; enabling the provider uses production.
+                        Safaricom sends results to <code>/payment/mpesa/callback</code> on this
+                        website's address, which must be public and use HTTPS.
+                    </div>
+                </group>
+            </group>
+        </field>
+    </record>
+</odoo>

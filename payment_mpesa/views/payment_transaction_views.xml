@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="payment_transaction_form_mpesa" model="ir.ui.view">
+        <field name="name">payment.transaction.form.mpesa</field>
+        <field name="model">payment.transaction</field>
+        <field name="inherit_id" ref="payment.payment_transaction_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button type="object" name="action_mpesa_check_status" string="Check M-Pesa Status"
+                        invisible="provider_code != 'mpesa' or state not in ('draft', 'pending')"/>
+            </xpath>
+            <field name="reference" position="after">
+                <field name="mpesa_receipt" invisible="provider_code != 'mpesa' or not mpesa_receipt"/>
+                <field name="mpesa_phone" invisible="provider_code != 'mpesa' or not mpesa_phone"/>
+            </field>
+        </field>
+    </record>
+</odoo>
