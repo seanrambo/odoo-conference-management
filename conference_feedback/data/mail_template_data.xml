@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ctx['feedback_new_ids']: the feedback rows this email asks about -->
+    <record id="mail_template_session_feedback" model="mail.template">
+        <field name="name">Conference: rate your sessions</field>
+        <field name="model_id" ref="event.model_event_registration"/>
+        <field name="subject">How were your sessions at {{ object.event_id.name }}?</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.event_id.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="use_default_to" eval="False"/>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p>Thank you for joining these sessions at <strong t-out="object.event_id.name or ''">the event</strong>. It takes a minute to rate them, and it helps our speakers and next year's programme.</p>
+    <ul>
+        <li t-foreach="object.env['conference.session.feedback'].browse(ctx.get('feedback_new_ids') or [])" t-as="feedback">
+            <t t-out="feedback.track_id.name or ''">Session</t><t t-if="feedback.speaker_id"> with <t t-out="feedback.speaker_id.name or ''">Speaker</t></t>
+        </li>
+    </ul>
+    <p><a t-att-href="object._get_feedback_url()" style="background-color: #151d42; padding: 10px 18px; text-decoration: none; color: #ffffff; font-size: 14px;">Rate my sessions</a></p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_event_survey" model="mail.template">
+        <field name="name">Conference: event survey</field>
+        <field name="model_id" ref="event.model_event_registration"/>
+        <field name="subject">Tell us about {{ object.event_id.name }}</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.event_id.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="use_default_to" eval="False"/>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.name or ''">there</t>,</p>
+    <p>Thank you for being part of <strong t-out="object.event_id.name or ''">the event</strong>. We would like to hear what worked and what we should change. The survey takes a few minutes.</p>
+    <p t-if="object.event_id.certificate_enabled and object.event_id.certificate_require_survey">Your certificate of attendance is sent once you have completed it.</p>
+    <p><a t-att-href="object.feedback_survey_input_id.get_base_url() + object.feedback_survey_input_id.get_start_url()" style="background-color: #151d42; padding: 10px 18px; text-decoration: none; color: #ffffff; font-size: 14px;">Start the survey</a></p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_template_certificate" model="mail.template">
+        <field name="name">Conference: certificate of attendance</field>
+        <field name="model_id" ref="model_conference_certificate"/>
+        <field name="subject">Your certificate for {{ object.event_id.name }}</field>
+        <field name="email_from">{{ (object.event_id.organizer_id.email_formatted or object.event_id.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="email_to">{{ object.attendee_email }}</field>
+        <field name="report_template_ids" eval="[(4, ref('conference_feedback.action_report_certificate'))]"/>
+        <field name="use_default_to" eval="False"/>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="object.attendee_name or ''">there</t>,</p>
+    <p>Your certificate for <strong t-out="object.event_id.name or ''">the event</strong> is attached<t t-if="object.cpd_points">. It records <strong t-out="'%g' % object.cpd_points">6</strong> <t t-out="object.cpd_label or 'CPD points'"/></t>.</p>
+    <p>Its number is <strong t-out="object.name or ''">CERT26-00001</strong>. Anyone you share it with, such as your professional body, can check it is genuine at the address printed on it.</p>
+    <p><a t-att-href="object._get_download_url()" style="color: #00707d;">Download it again</a></p>
+</div>
+        </field>
+    </record>
+
+    <!-- ctx['scorecard_rows']: see event.event._feedback_speaker_scorecards() -->
+    <record id="mail_template_speaker_scorecard" model="mail.template">
+        <field name="name">Conference: speaker scorecard</field>
+        <field name="model_id" ref="event.model_event_event"/>
+        <field name="subject">Your session results from {{ object.name }}</field>
+        <field name="email_from">{{ (object.organizer_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="use_default_to" eval="False"/>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0; padding: 0; font-size: 14px;">
+    <p>Hello <t t-out="ctx.get('speaker_name') or ''">there</t>,</p>
+    <p>Thank you for speaking at <strong t-out="object.name or ''">the event</strong>. Here is how your sessions went. Comments are shared without attendees' names.</p>
+    <t t-foreach="ctx.get('scorecard_rows') or []" t-as="row">
+        <div style="border-left: 3px solid #00707d; padding: 4px 12px; margin: 16px 0;">
+            <p style="margin: 0 0 4px 0;"><strong t-out="row['name']">Session</strong><br/>
+                <span style="color: #5b6478;"><t t-out="row['when']"/><t t-if="row['room']"> · <t t-out="row['room']"/></t></span></p>
+            <p style="margin: 0 0 4px 0;">
+                In the room: <strong t-out="row['attended']">0</strong><t t-if="row['capacity']"> of <t t-out="row['capacity']"/> seats</t><br/>
+                <t t-if="row['rating_count']">Rating: <strong t-out="row['rating_avg']">4.5</strong> out of 5, from <t t-out="row['rating_count']"/> attendees</t>
+                <t t-else="">No ratings yet</t>
+            </p>
+            <ul t-if="row['comments']" style="margin: 4px 0; color: #333;">
+                <li t-foreach="row['comments']" t-as="comment" t-out="comment">Comment</li>
+            </ul>
+        </div>
+    </t>
+</div>
+        </field>
+    </record>
+</odoo>

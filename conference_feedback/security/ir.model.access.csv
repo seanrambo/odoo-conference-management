@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_conference_session_feedback_user,conference.session.feedback.user,model_conference_session_feedback,event.group_event_user,1,1,1,1
+access_conference_certificate_user,conference.certificate.user,model_conference_certificate,event.group_event_user,1,1,1,1
+access_conference_certificate_desk,conference.certificate.desk,model_conference_certificate,event.group_event_registration_desk,1,0,0,0

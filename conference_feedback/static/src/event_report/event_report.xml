@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="conference_feedback.EventReport">
+        <div class="o_conference_report o_action h-100 overflow-auto bg-view">
+            <div class="container-fluid py-3 px-3 px-md-4" style="max-width: 1280px;">
+                <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                    <a href="#" title="Back" t-on-click.prevent="onClickBack"><i class="oi oi-chevron-left fa-lg"/></a>
+                    <div class="me-auto">
+                        <h2 class="h4 mb-0" t-out="state.data ? state.data.event.name : 'Event Report'"/>
+                        <small t-if="state.data" class="text-muted" t-out="state.data.event.dates"/>
+                    </div>
+                    <button t-if="state.data" class="btn btn-secondary btn-sm" t-on-click="openEvent">Open event</button>
+                </div>
+
+                <!-- Event picker -->
+                <t t-if="!state.data">
+                    <p class="text-muted">Pick an event.</p>
+                    <div class="list-group" style="max-width: 640px;">
+                        <button t-foreach="state.events" t-as="event" t-key="event.id" type="button"
+                                class="list-group-item list-group-item-action"
+                                t-on-click="() => this.onPickEvent(event.id)">
+                            <t t-out="event.name"/>
+                        </button>
+                    </div>
+                </t>
+
+                <t t-else="">
+                    <t t-set="k" t-value="state.data.kpis"/>
+                    <!-- KPI row -->
+                    <div class="o_cr_kpis mb-4">
+                        <div class="o_cr_tile">
+                            <div class="o_cr_label">Registered</div>
+                            <div class="o_cr_value" t-out="k.registered"/>
+                            <div class="o_cr_sub"><t t-out="k.unconfirmed"/> unconfirmed · <t t-out="k.cancelled"/> cancelled</div>
+                        </div>
+                        <div class="o_cr_tile">
+                            <div class="o_cr_label">Checked in</div>
+                            <div class="o_cr_value" t-out="k.attended"/>
+                            <div class="o_cr_sub"><t t-out="k.checkin_rate"/>% of registered</div>
+                        </div>
+                        <div t-if="state.data.revenue" class="o_cr_tile">
+                            <div class="o_cr_label">Ticket sales</div>
+                            <div class="o_cr_value" t-out="state.data.revenue.total_display"/>
+                            <div class="o_cr_sub">confirmed orders, tax included</div>
+                        </div>
+                        <div class="o_cr_tile">
+                            <div class="o_cr_label">Session attendance</div>
+                            <div class="o_cr_value" t-out="k.session_scans"/>
+                            <div class="o_cr_sub">scans across <t t-out="k.sessions"/> sessions</div>
+                        </div>
+                        <div class="o_cr_tile">
+                            <div class="o_cr_label">Session rating</div>
+                            <div class="o_cr_value"><t t-if="k.rating_avg !== null"><t t-out="k.rating_avg"/><small class="text-muted fs-6"> / 5</small></t><t t-else="">–</t></div>
+                            <div class="o_cr_sub"><t t-out="k.rating_count"/> ratings · <t t-out="k.feedback_rate"/>% answered</div>
+                        </div>
+                        <div t-if="k.survey_sent" class="o_cr_tile">
+                            <div class="o_cr_label">Event survey</div>
+                            <div class="o_cr_value"><t t-out="k.survey_done"/><small class="text-muted fs-6"> / <t t-out="k.survey_sent"/></small></div>
+                            <div class="o_cr_sub">completed</div>
+                        </div>
+                        <div class="o_cr_tile">
+                            <div class="o_cr_label">Certificates</div>
+                            <div class="o_cr_value" t-out="k.certificates"/>
+                            <div class="o_cr_sub" t-if="state.data.event.cpd_enabled"><t t-out="k.cpd_total"/> <t t-out="state.data.event.cpd_label"/> earned</div>
+                            <div class="o_cr_sub" t-else="">issued</div>
+                        </div>
+                    </div>
+
+                    <!-- Registrations over time -->
+                    <section class="o_cr_card mb-4">
+                        <h3 class="o_cr_title">Registrations over time</h3>
+                        <p class="o_cr_caption">Confirmed registrations, running total by day</p>
+                        <div class="position-relative" t-ref="chart">
+                            <t t-if="state.data.timeline.length">
+                                <t t-set="c" t-value="chart"/>
+                                <t t-set="h" t-value="hoverPoint"/>
+                                <svg t-att-width="c.width" t-att-height="c.height" class="d-block" role="img"
+                                     aria-label="Running total of confirmed registrations by day"
+                                     t-on-mousemove="onChartMove" t-on-mouseleave="onChartLeave">
+                                    <g t-foreach="c.ticks" t-as="tick" t-key="tick_index">
+                                        <line t-att-x1="c.left" t-att-x2="c.right" t-att-y1="tick.y" t-att-y2="tick.y" class="o_cr_grid"/>
+                                        <text t-att-x="c.left - 8" t-att-y="tick.y + 4" text-anchor="end" class="o_cr_axis" t-out="tick.value"/>
+                                    </g>
+                                    <text t-foreach="c.xLabels" t-as="l" t-key="l.i" t-att-x="l.x" t-att-y="c.height - 8"
+                                          text-anchor="middle" class="o_cr_axis" t-out="l.label"/>
+                                    <path t-att-d="c.area" class="o_cr_area"/>
+                                    <path t-att-d="c.line" class="o_cr_line"/>
+                                    <g t-if="h">
+                                        <line t-att-x1="h.cx" t-att-x2="h.cx" t-att-y1="16" t-att-y2="c.baseline" class="o_cr_crosshair"/>
+                                        <circle t-att-cx="h.cx" t-att-cy="h.cy" r="5" class="o_cr_dot"/>
+                                    </g>
+                                    <rect t-att-x="c.left" y="0" t-att-width="c.right - c.left" t-att-height="c.height" fill="transparent"/>
+                                </svg>
+                                <div t-if="h" class="o_cr_tooltip" t-att-style="h.style">
+                                    <div class="fw-bold" t-out="h.label"/>
+                                    <div><t t-out="h.total"/> registered</div>
+                                    <div class="text-muted">+<t t-out="h.count"/> that day</div>
+                                </div>
+                            </t>
+                            <p t-else="" class="text-muted mb-0">No confirmed registrations yet.</p>
+                        </div>
+                    </section>
+
+                    <!-- Sessions -->
+                    <section class="o_cr_card mb-4">
+                        <h3 class="o_cr_title">Sessions</h3>
+                        <p class="o_cr_caption">Attendance from door scans; bars are relative to the busiest session or the room's capacity</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0 o_cr_table">
+                                <thead><tr>
+                                    <th>When</th><th>Session</th><th class="d-none d-md-table-cell">Speaker</th>
+                                    <th class="d-none d-lg-table-cell">Room</th>
+                                    <th style="min-width: 160px;">Attended</th><th class="text-end">Rating</th>
+                                </tr></thead>
+                                <tbody>
+                                    <tr t-foreach="state.data.sessions" t-as="s" t-key="s.id" class="o_cr_row"
+                                        t-att-class="{'text-muted text-decoration-line-through': s.cancelled}"
+                                        t-on-click="() => this.openSession(s)">
+                                        <td class="text-nowrap" t-out="s.when"/>
+                                        <td t-out="s.name"/>
+                                        <td class="d-none d-md-table-cell" t-out="s.speaker"/>
+                                        <td class="d-none d-lg-table-cell" t-out="s.room"/>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="o_cr_bar_track flex-grow-1">
+                                                    <div class="o_cr_bar" t-att-style="'width: ' + barWidth(s.attended, s.capacity || maxSessionAttendance)"/>
+                                                </div>
+                                                <span class="text-nowrap small"><t t-out="s.attended"/><t t-if="s.capacity"> / <t t-out="s.capacity"/></t></span>
+                                            </div>
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            <t t-if="s.rating_avg !== null"><i class="fa fa-star o_cr_star me-1" aria-hidden="true"/><t t-out="s.rating_avg"/> <small class="text-muted">(<t t-out="s.rating_count"/>)</small></t>
+                                            <span t-else="" class="text-muted">–</span>
+                                        </td>
+                                    </tr>
+                                    <tr t-if="!state.data.sessions.length"><td colspan="6" class="text-muted">No scheduled sessions.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <div class="row g-4">
+                        <!-- Speakers -->
+                        <div class="col-lg-6">
+                            <section class="o_cr_card h-100">
+                                <h3 class="o_cr_title">Speakers</h3>
+                                <p class="o_cr_caption">Best rated first</p>
+                                <table class="table table-sm align-middle mb-0 o_cr_table">
+                                    <thead><tr><th>Speaker</th><th class="text-end">Sessions</th><th class="text-end">Attended</th><th class="text-end">Rating</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="state.data.speakers" t-as="sp" t-key="sp.name">
+                                            <td t-out="sp.name"/>
+                                            <td class="text-end" t-out="sp.sessions"/>
+                                            <td class="text-end" t-out="sp.attended"/>
+                                            <td class="text-end text-nowrap">
+                                                <t t-if="sp.rating_avg !== null"><i class="fa fa-star o_cr_star me-1" aria-hidden="true"/><t t-out="sp.rating_avg"/> <small class="text-muted">(<t t-out="sp.rating_count"/>)</small></t>
+                                                <span t-else="" class="text-muted">–</span>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="!state.data.speakers.length"><td colspan="4" class="text-muted">No speakers on the agenda.</td></tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                        </div>
+                        <!-- Revenue by ticket -->
+                        <div class="col-lg-6" t-if="state.data.revenue">
+                            <section class="o_cr_card h-100">
+                                <h3 class="o_cr_title">Sales by ticket</h3>
+                                <p class="o_cr_caption">Confirmed orders, tax included</p>
+                                <table class="table table-sm align-middle mb-0 o_cr_table">
+                                    <thead><tr><th>Ticket</th><th class="text-end">Seats</th><th style="min-width: 180px;">Sales</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="state.data.revenue.tickets" t-as="t" t-key="t_index">
+                                            <td t-out="t.name"/>
+                                            <td class="text-end" t-out="t.seats"/>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="o_cr_bar_track flex-grow-1">
+                                                        <div class="o_cr_bar" t-att-style="'width: ' + barWidth(t.amount, maxTicketAmount)"/>
+                                                    </div>
+                                                    <span class="text-nowrap small" t-out="t.amount_display"/>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="!state.data.revenue.tickets.length"><td colspan="3" class="text-muted">No confirmed sales.</td></tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>

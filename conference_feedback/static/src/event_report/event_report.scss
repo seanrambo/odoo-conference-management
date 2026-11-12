@@ -1,0 +1,109 @@
+// Single-series chart colour (reference palette slot 1, light surface).
+.o_conference_report {
+    --cr-series: #2a78d6;
+    --cr-series-fill: rgba(42, 120, 214, 0.12);
+    --cr-border: #dee2e6;
+    --cr-grid: #e9ecef;
+    --cr-track: #eef0f3;
+    --cr-surface: #ffffff;
+
+    .o_cr_kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 12px;
+    }
+    .o_cr_tile, .o_cr_card {
+        border: 1px solid var(--cr-border);
+        border-radius: 8px;
+        background: var(--cr-surface);
+    }
+    .o_cr_tile {
+        padding: 12px 14px;
+    }
+    .o_cr_label {
+        font-size: 0.8rem;
+        color: var(--bs-secondary-color);
+    }
+    .o_cr_value {
+        font-size: 1.6rem;
+        font-weight: 600;
+        line-height: 1.2;
+        margin: 2px 0;
+        font-variant-numeric: tabular-nums;
+    }
+    .o_cr_sub {
+        font-size: 0.78rem;
+        color: var(--bs-secondary-color);
+    }
+    .o_cr_card {
+        padding: 16px;
+    }
+    .o_cr_title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .o_cr_caption {
+        font-size: 0.8rem;
+        color: var(--bs-secondary-color);
+        margin-bottom: 12px;
+    }
+    .o_cr_grid {
+        stroke: var(--cr-grid);
+        stroke-width: 1;
+    }
+    .o_cr_axis {
+        fill: var(--bs-secondary-color);
+        font-size: 11px;
+    }
+    .o_cr_line {
+        fill: none;
+        stroke: var(--cr-series);
+        stroke-width: 2;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+    }
+    .o_cr_area {
+        fill: var(--cr-series-fill);
+    }
+    .o_cr_crosshair {
+        stroke: var(--bs-secondary-color);
+        stroke-width: 1;
+    }
+    .o_cr_dot {
+        fill: var(--cr-series);
+        stroke: var(--cr-surface);
+        stroke-width: 2;
+    }
+    .o_cr_tooltip {
+        position: absolute;
+        pointer-events: none;
+        background: var(--cr-surface);
+        border: 1px solid var(--cr-border);
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    .o_cr_table td, .o_cr_table th {
+        font-variant-numeric: tabular-nums;
+    }
+    .o_cr_row {
+        cursor: pointer;
+    }
+    .o_cr_bar_track {
+        height: 8px;
+        background: var(--cr-track);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .o_cr_bar {
+        height: 100%;
+        background: var(--cr-series);
+        border-radius: 0 4px 4px 0;
+    }
+    .o_cr_star {
+        color: var(--bs-secondary-color);
+    }
+}

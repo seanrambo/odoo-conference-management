@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="event_event_view_form_feedback" model="ir.ui.view">
+        <field name="name">event.event.form.feedback</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="conference_onsite.event_event_view_form_onsite"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_open_event_report" type="object" string="Event Report"
+                        groups="event.group_event_user"/>
+                <button name="action_issue_certificates" type="object" string="Issue Certificates"
+                        invisible="not certificate_enabled" groups="event.group_event_user"
+                        confirm="Issue and email certificates to everyone who meets the rules and has none yet?"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_session_feedback" type="object" class="oe_stat_button"
+                        icon="fa-star-half-o" invisible="not feedback_count" groups="event.group_event_user">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="feedback_rating_avg"/> / 5</span>
+                        <span class="o_stat_text"><field name="feedback_count"/> ratings</span>
+                    </div>
+                </button>
+                <button name="action_view_certificates" type="object" class="oe_stat_button"
+                        icon="fa-certificate" invisible="not certificate_count" groups="event.group_event_user">
+                    <field name="certificate_count" string="Certificates" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='conference_onsite']" position="after">
+                <page string="After the Event" name="conference_feedback" groups="event.group_event_user">
+                    <group>
+                        <group string="Session Ratings">
+                            <field name="feedback_session_enabled"/>
+                            <field name="feedback_session_delay" invisible="not feedback_session_enabled"/>
+                            <field name="feedback_email_gap_hours" invisible="not feedback_session_enabled"/>
+                            <div colspan="2" class="mt-2">
+                                <button name="action_send_speaker_scorecards" type="object" class="btn btn-secondary"
+                                        string="Email Speaker Scorecards" icon="fa-envelope-o"
+                                        confirm="Email each speaker their sessions' attendance, ratings and comments?"/>
+                            </div>
+                        </group>
+                        <group string="Event Survey">
+                            <field name="feedback_survey_id" context="{'default_survey_type': 'survey'}"/>
+                            <field name="feedback_survey_audience" invisible="not feedback_survey_id"/>
+                            <field name="feedback_survey_delay_hours" invisible="not feedback_survey_id"/>
+                            <field name="feedback_survey_sent_date" invisible="not feedback_survey_sent_date"/>
+                            <div colspan="2" class="mt-2" invisible="not feedback_survey_id">
+                                <button name="action_send_feedback_survey" type="object" class="btn btn-secondary"
+                                        string="Send Survey Now" icon="fa-paper-plane-o"
+                                        confirm="Email the survey link to everyone who hasn't had it yet?"/>
+                            </div>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Certificates">
+                            <field name="certificate_enabled"/>
+                            <field name="certificate_title" invisible="not certificate_enabled"/>
+                            <field name="certificate_auto" invisible="not certificate_enabled"/>
+                            <field name="certificate_min_sessions" invisible="not certificate_enabled"/>
+                            <field name="certificate_min_cpd" invisible="not certificate_enabled or not cpd_enabled"/>
+                            <field name="certificate_require_survey" invisible="not certificate_enabled or not feedback_survey_id"/>
+                        </group>
+                        <group string="Signature" invisible="not certificate_enabled">
+                            <field name="certificate_signatory_name" placeholder="e.g. Dr Grace Wanjiru"/>
+                            <field name="certificate_signatory_title" placeholder="e.g. Conference Chair"/>
+                            <field name="certificate_signature" widget="image" class="oe_avatar"/>
+                        </group>
+                    </group>
+                    <p class="text-muted" invisible="not certificate_enabled">
+                        Attendees must be checked in to get a certificate. To issue one to someone who doesn't meet
+                        the rules, open their registration and press <strong>Issue Certificate</strong>.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

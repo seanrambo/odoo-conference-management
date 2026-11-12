@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="event_registration_view_form_feedback" model="ir.ui.view">
+        <field name="name">event.registration.form.feedback</field>
+        <field name="model">event.registration</field>
+        <field name="inherit_id" ref="event.view_event_registration_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="certificate_id" invisible="1"/>
+                <button name="action_issue_certificate" type="object" string="Issue Certificate"
+                        invisible="certificate_id or state == 'cancel'" groups="event.group_event_user"
+                        confirm="Issue and email a certificate to this attendee, whatever the event's rules say?"/>
+                <button name="action_view_certificate" type="object" string="Certificate"
+                        invisible="not certificate_id" groups="event.group_event_user"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Feedback" name="conference_feedback" groups="event.group_event_user"
+                      invisible="not session_feedback_ids and not feedback_survey_input_id">
+                    <group>
+                        <field name="feedback_survey_input_id" invisible="not feedback_survey_input_id"/>
+                        <field name="feedback_survey_state" invisible="not feedback_survey_input_id"/>
+                    </group>
+                    <field name="session_feedback_ids" readonly="1">
+                        <list>
+                            <field name="track_id"/>
+                            <field name="rating" widget="priority_stars"/>
+                            <field name="comment"/>
+                            <field name="state" widget="badge" decoration-success="state == 'done'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

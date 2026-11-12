@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="event_track_view_form_feedback" model="ir.ui.view">
+        <field name="name">event.track.form.feedback</field>
+        <field name="model">event.track</field>
+        <field name="inherit_id" ref="website_event_track.view_event_track_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_feedback" type="object" class="oe_stat_button"
+                        icon="fa-star-half-o" invisible="not feedback_count" groups="event.group_event_user">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="feedback_rating_avg"/> / 5</span>
+                        <span class="o_stat_text"><field name="feedback_count"/> ratings</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="event_track_view_list_feedback" model="ir.ui.view">
+        <field name="name">event.track.list.feedback</field>
+        <field name="model">event.track</field>
+        <field name="inherit_id" ref="website_event_track.view_event_track_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_id']" position="after">
+                <field name="feedback_rating_avg" optional="show" string="Rating"/>
+                <field name="feedback_count" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_event_report" model="ir.actions.client">
+        <field name="name">Event Report</field>
+        <field name="tag">conference_feedback.event_report</field>
+        <field name="path">event-report</field>
+    </record>
+
+    <menuitem id="menu_conference_after_event" name="After the Event" parent="conference_management.menu_conference_root"
+              groups="event.group_event_user" sequence="38"/>
+    <menuitem id="menu_conference_event_report" name="Event Report" parent="menu_conference_after_event"
+              action="action_event_report" sequence="10"/>
+    <menuitem id="menu_conference_session_feedback" name="Session Feedback" parent="menu_conference_after_event"
+              action="conference_session_feedback_action" sequence="20"/>
+    <menuitem id="menu_conference_certificates" name="Certificates" parent="menu_conference_after_event"
+              action="conference_certificate_action" sequence="30"/>
+</odoo>

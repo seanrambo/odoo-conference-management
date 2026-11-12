@@ -1,6 +1,6 @@
 # Odoo Conference Management
 
-Odoo 19 modules that run a conference on top of Odoo Events, from the call for papers and paid registration to the event day itself.
+Odoo 19 modules that run a conference on top of Odoo Events, from the call for papers and paid registration to the event day and what comes after it.
 
 | Module | Phase | What it does |
 |---|---|---|
@@ -8,6 +8,7 @@ Odoo 19 modules that run a conference on top of Odoo Events, from the call for p
 | `conference_registration` | 2 | Waitlist, group bookings, visa invitation letters, ticket transfers, self-service cancellation |
 | `payment_mpesa` | 2 | M-Pesa online payments (Safaricom Daraja STK push) for any Odoo checkout |
 | `conference_onsite` | 3 | Session attendance scanning, CPD points, live check-in numbers, emails when a session moves or is cancelled |
+| `conference_feedback` | 4 | Session ratings, speaker scorecards, post-event survey, certificates of attendance, event report |
 
 ## Phase 1: `conference_management`
 
@@ -61,40 +62,64 @@ Settings are on the event form, **Event Day** tab. Menus are under **Conference 
 - **Live numbers** on the event form: checked in out of expected, and total session scans. **Session Attendance** has list, pivot and graph views by session, room, day and hour.
 - **Session change emails.** When a published session's time or room changes, or it is moved to a cancelled stage, the people who saved it to their agenda and its speaker are emailed what changed, with the old and new values. For key sessions ("wishlisted by default") every confirmed attendee is emailed. People who turned off a key session's reminder are left out. Sessions that have already finished, and unpublished ones, don't send emails. A note on the session records how many people were emailed.
 
+## Phase 4: `conference_feedback`
+
+Settings are on the event form, **After the Event** tab. Menus are under **Conference › After the Event**.
+
+- **Session ratings.** After a session ends (15 minutes later by default), everyone scanned into it is emailed a link to a page where they rate it from 1 to 5 and leave a comment. Emails are grouped: an attendee gets at most one every 4 hours (adjustable), covering every session they haven't been asked about yet. They can change their answers for 30 days after the event. Only sessions that ended in the last 3 days are asked about, so installing the module never emails people about old events.
+- **Speaker scorecards.** Ratings roll up by session and by speaker (**Session Feedback** has list and pivot views). **Email Speaker Scorecards** sends each speaker their attendance, average rating and comments, without attendees' names.
+- **Event survey.** Pick one of your Odoo surveys. A set time after the event ends (2 hours by default), each checked-in attendee (or everyone registered) gets a personal link. **Send Survey Now** sends it straight away to anyone who doesn't have it yet.
+- **Certificates of attendance.** A landscape A4 PDF with the attendee's name, the event, their CPD points and sessions attended, the signatory and signature, a number like `CERT26-00001`, and a QR code. The QR code opens a public page that confirms the certificate is genuine, or says it was revoked.
+  - Rules per event: checked in (always), a minimum number of sessions, minimum CPD points, and optionally a completed survey.
+  - Issued automatically when the event ends, and later for anyone who meets the rules afterwards (for example by completing the survey). **Issue Certificates** on the event does the same on demand.
+  - **Issue Certificate** on a registration issues one whatever the rules say. Certificates can be revoked and reinstated.
+  - CPD points and session counts are fixed when the certificate is issued.
+  - If a certificate can't be emailed (for example, no PDF engine on the server), it is still issued, the reason is noted on it, and you can press **Email Again**.
+- **Event Report.** From the event (**Event Report**) or the menu. It shows:
+  - headline numbers: registered, checked in, ticket sales, session attendance, average session rating and response rate, survey completions, and certificates;
+  - a chart of registrations over time;
+  - a table of sessions with attendance against room capacity, and ratings;
+  - a speaker table, and sales by ticket.
+
+  Ticket sales only appear for users with Sales access.
+
 ## Install
 
 Add this repository's folder to your Odoo `addons_path`, update the apps list, then install the modules you need:
 
 ```bash
-./odoo-bin -c odoo.conf -d <database> -i conference_management,conference_registration,payment_mpesa,conference_onsite
+./odoo-bin -c odoo.conf -d <database> -i conference_management,conference_registration,payment_mpesa,conference_onsite,conference_feedback
 ```
 
-`conference_registration` depends on `conference_management` and `event_sale`. `payment_mpesa` only needs `payment`. `conference_onsite` only needs `conference_management`.
+`conference_registration` depends on `conference_management` and `event_sale`. `payment_mpesa` only needs `payment`. `conference_onsite` only needs `conference_management`. `conference_feedback` needs `conference_onsite`, `survey` and `event_sale`.
 
 ## Roles
 
 | Role | Access |
 |---|---|
-| Events user (organiser) | Everything: submissions, decisions, reviews, documents, AV pack, waitlists, visa letters, group bookings |
+| Events user (organiser) | Everything: submissions, decisions, reviews, documents, AV pack, waitlists, visa letters, group bookings, session attendance, feedback, certificates, event report |
 | Events / Registration Desk (door staff) | Registration Desk and Session Scanner only: check in and scan attendees, read sessions and rooms |
 | Conference / Reviewer | Their own assigned reviews and the files of those submissions |
 | Portal user | Their own submissions, uploaded files and tickets |
 | Anyone with a booking link | That one booking: ticket, transfer, cancellation, visa letter |
+| Anyone with a feedback link | That attendee's session ratings, survey link and certificate download |
+| Anyone with a certificate link or QR code | The certificate's verification page and PDF |
 
 ## Tests
 
 ```bash
-./odoo-bin -c odoo.conf -d <test_db> -i conference_registration,payment_mpesa,conference_onsite \
-  --test-tags /conference_management,/conference_registration,/payment_mpesa,/conference_onsite --stop-after-init
+./odoo-bin -c odoo.conf -d <test_db> -i conference_registration,payment_mpesa,conference_feedback \
+  --test-tags /conference_management,/conference_registration,/payment_mpesa,/conference_onsite,/conference_feedback --stop-after-init
 ```
 
-The Session Scanner browser test needs Chrome or Chromium on the `PATH` and the `websocket-client` Python package. Without them it is skipped.
+The browser tests (Session Scanner, Event Report) need Chrome or Chromium on the `PATH` and the `websocket-client` Python package. Without them it is skipped.
 
 ## Notes
 
 - Blind review hides the author's name and contact from reviewers. File names and file contents can still identify the author, so ask authors to upload anonymised files.
 - For large uploads, raise your reverse proxy's request size limit too, for example `client_max_body_size` in nginx.
-- PDFs (tickets, visa letters, quotations) need `wkhtmltopdf` installed on the server.
+- PDFs (tickets, visa letters, certificates, quotations) need `wkhtmltopdf` installed on the server.
+- QR codes and barcodes (certificates, badges) need reportlab's renderer. A system Python on Debian or Ubuntu has it; in a virtualenv, run `pip install rl-renderPM`.
 - Session change emails go out one per session. Someone who saved three sessions that all move gets three emails.
 - The waitlist works on events with a seat limit and a single session. Events with several time slots are not covered yet.
 

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_conference_certificate" model="report.paperformat">
+        <field name="name">Conference Certificate (A4 landscape)</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="disable_shrinking" eval="True"/>
+        <field name="dpi">96</field>
+    </record>
+
+    <record id="action_report_certificate" model="ir.actions.report">
+        <field name="name">Certificate of Attendance</field>
+        <field name="model">conference.certificate</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">conference_feedback.certificate_document</field>
+        <field name="report_file">conference_feedback.certificate_document</field>
+        <field name="print_report_name">'Certificate %s - %s' % (object.name, object.attendee_name)</field>
+        <field name="paperformat_id" ref="paperformat_conference_certificate"/>
+        <field name="binding_model_id" ref="model_conference_certificate"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="certificate_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="cert">
+                <t t-set="event" t-value="cert.event_id"/>
+                <t t-set="company" t-value="event.company_id or res_company"/>
+                <div class="page o_conference_certificate" style="width: 297mm; height: 210mm; padding: 12mm; box-sizing: border-box; font-family: 'Helvetica Neue', Arial, sans-serif; color: #151d42; page-break-after: always;">
+                    <div style="border: 3px solid #151d42; height: 100%; box-sizing: border-box; padding: 4mm;">
+                        <div style="border: 1px solid #00707d; height: 100%; box-sizing: border-box; padding: 12mm 18mm; position: relative; text-align: center;">
+                            <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" style="max-height: 18mm; max-width: 60mm;" alt="Logo"/>
+                            <div t-if="cert.state == 'revoked'" style="color: #b42318; font-weight: bold; letter-spacing: 2px; margin-top: 4mm;">REVOKED</div>
+                            <div style="font-size: 30pt; font-weight: bold; letter-spacing: 1px; margin-top: 8mm;" t-out="event.certificate_title or 'Certificate of Attendance'"/>
+                            <div style="width: 30mm; height: 2px; background: #00707d; margin: 5mm auto;"/>
+                            <div style="font-size: 13pt; color: #5b6478;">This is to certify that</div>
+                            <div style="font-size: 28pt; margin: 5mm 0; font-family: Georgia, 'Times New Roman', serif;" t-out="cert.attendee_name"/>
+                            <div style="font-size: 13pt; line-height: 1.6;">
+                                attended <strong t-out="event.name"/>,
+                                held from <t t-out="event.date_begin" t-options="{'widget': 'date', 'format': 'd MMMM y', 'tz_name': event.date_tz}"/>
+                                to <t t-out="event.date_end" t-options="{'widget': 'date', 'format': 'd MMMM y', 'tz_name': event.date_tz}"/><t t-if="event.address_id.city"> in <t t-out="event.address_id.city"/></t>.
+                            </div>
+                            <div t-if="cert.cpd_points" style="font-size: 15pt; margin-top: 5mm;">
+                                <strong t-out="'%g' % cert.cpd_points"/> <t t-out="cert.cpd_label or 'CPD points'"/>
+                                <span t-if="cert.session_count" style="color: #5b6478; font-size: 12pt;"> · <t t-out="cert.session_count"/> sessions attended</span>
+                            </div>
+                            <div t-elif="cert.session_count" style="font-size: 12pt; margin-top: 5mm; color: #5b6478;">
+                                <t t-out="cert.session_count"/> sessions attended
+                            </div>
+
+                            <div style="position: absolute; left: 18mm; right: 18mm; bottom: 12mm;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="width: 40%; text-align: left; vertical-align: bottom; font-size: 10pt;">
+                                        <div style="height: 18mm;">
+                                            <img t-if="event.certificate_signature" t-att-src="image_data_uri(event.certificate_signature)" style="max-height: 18mm;" alt="Signature"/>
+                                        </div>
+                                        <div style="border-top: 1px solid #151d42; padding-top: 1.5mm; width: 65mm;">
+                                            <strong t-out="event.certificate_signatory_name or company.name"/><br/>
+                                            <t t-out="event.certificate_signatory_title or ''"/>
+                                        </div>
+                                    </td>
+                                    <td style="width: 35%; text-align: right; vertical-align: bottom; font-size: 9pt; color: #5b6478; padding-right: 4mm;">
+                                        Certificate <strong style="color: #151d42;" t-out="cert.name"/><br/>
+                                        Issued <t t-out="cert.issue_date" t-options="{'widget': 'date', 'format': 'd MMMM y'}"/><br/>
+                                        Check it at <t t-out="cert._get_verify_url()"/>
+                                    </td>
+                                    <td style="width: 25mm; text-align: right; vertical-align: bottom;">
+                                        <img t-att-src="cert._get_qr_src()" style="width: 25mm; height: 25mm;" alt="Verification QR code"/>
+                                    </td>
+                                </tr>
+                            </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

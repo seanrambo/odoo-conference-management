@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="feedback_page" name="Session feedback">
+        <t t-call="website.layout">
+            <div class="container py-5 o_conference_feedback_page" style="max-width: 760px;">
+                <h1 class="h3 mb-1">Your sessions at <t t-out="event.name"/></h1>
+                <p class="text-muted">Hello <t t-out="registration.name"/>. Rate each session from 1 (poor) to 5 (excellent). Comments go to the organisers and to the speaker, without your name.</p>
+
+                <div t-if="saved" class="alert alert-success" role="status">Thank you. Your ratings are saved, and you can change them here until the feedback closes.</div>
+
+                <div t-if="certificate" class="alert alert-info d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span>Your certificate <strong t-out="certificate.name"/> is ready.</span>
+                    <a class="btn btn-primary btn-sm" t-att-href="certificate._get_download_url()">Download certificate</a>
+                </div>
+                <div t-if="survey_url" class="alert alert-light border d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span>Tell us about the event as a whole.</span>
+                    <a class="btn btn-outline-primary btn-sm" t-att-href="survey_url">Take the survey</a>
+                </div>
+
+                <p t-if="not feedbacks" class="text-muted mt-4">There are no sessions to rate yet. We email you after each session you attend.</p>
+                <p t-if="feedbacks and not is_open" class="text-muted mt-4">Feedback for this event has closed. Thank you for taking part.</p>
+
+                <form t-if="feedbacks and is_open" method="post" t-attf-action="/conference/feedback/#{token}">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <div t-foreach="feedbacks" t-as="feedback" class="card mb-3">
+                        <div class="card-body">
+                            <h2 class="h5 mb-0" t-out="feedback.track_id.name"/>
+                            <p class="text-muted small mb-2">
+                                <t t-if="feedback.speaker_id"><t t-out="feedback.speaker_id.name"/> · </t>
+                                <t t-out="feedback.track_id.date" t-options="{'widget': 'datetime', 'tz_name': event.date_tz, 'format': 'EEE d MMM, HH:mm'}"/>
+                                <t t-if="feedback.location_id"> · <t t-out="feedback.location_id.name"/></t>
+                            </p>
+                            <div class="btn-group mb-2" role="radiogroup" t-att-aria-label="'Rating for %s' % feedback.track_id.name">
+                                <t t-foreach="range(1, 6)" t-as="score">
+                                    <input type="radio" class="btn-check" t-att-name="'rating_%s' % feedback.id"
+                                           t-att-id="'rating_%s_%s' % (feedback.id, score)" t-att-value="score"
+                                           t-att-checked="feedback.rating == score or None" autocomplete="off"/>
+                                    <label class="btn btn-outline-primary px-3" t-att-for="'rating_%s_%s' % (feedback.id, score)" t-out="score"/>
+                                </t>
+                            </div>
+                            <textarea class="form-control" rows="2" t-att-name="'comment_%s' % feedback.id"
+                                      placeholder="What worked, and what could be better? (optional)" t-out="feedback.comment or ''"/>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">Save my ratings</button>
+                </form>
+            </div>
+        </t>
+    </template>
+
+    <template id="certificate_verify_page" name="Certificate verification">
+        <t t-call="website.layout">
+            <div class="container py-5" style="max-width: 720px;">
+                <h1 class="h3">Certificate check</h1>
+                <t t-if="valid">
+                    <div class="alert alert-success" role="status">
+                        Certificate <strong t-out="number"/> is genuine.
+                    </div>
+                    <dl class="row">
+                        <dt class="col-sm-4">Name</dt><dd class="col-sm-8" t-out="certificate.attendee_name"/>
+                        <dt class="col-sm-4">Event</dt><dd class="col-sm-8" t-out="certificate.event_id.name"/>
+                        <dt class="col-sm-4">Dates</dt>
+                        <dd class="col-sm-8">
+                            <t t-out="certificate.event_id.date_begin" t-options="{'widget': 'date', 'tz_name': certificate.event_id.date_tz, 'format': 'd MMMM y'}"/> to
+                            <t t-out="certificate.event_id.date_end" t-options="{'widget': 'date', 'tz_name': certificate.event_id.date_tz, 'format': 'd MMMM y'}"/>
+                        </dd>
+                        <t t-if="certificate.cpd_points">
+                            <dt class="col-sm-4" t-out="certificate.cpd_label or 'CPD points'"/>
+                            <dd class="col-sm-8" t-out="'%g' % certificate.cpd_points"/>
+                        </t>
+                        <dt class="col-sm-4">Sessions attended</dt><dd class="col-sm-8" t-out="certificate.session_count"/>
+                        <dt class="col-sm-4">Issued</dt>
+                        <dd class="col-sm-8"><t t-out="certificate.issue_date" t-options="{'widget': 'date', 'format': 'd MMMM y'}"/></dd>
+                    </dl>
+                </t>
+                <div t-elif="certificate" class="alert alert-danger" role="alert">
+                    Certificate <strong t-out="number"/> has been revoked by the organisers and is no longer valid.
+                </div>
+                <div t-else="" class="alert alert-danger" role="alert">
+                    We could not verify certificate <strong t-out="number"/>. Check the address, or contact the organisers.
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

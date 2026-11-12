@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="conference_certificate_view_list" model="ir.ui.view">
+        <field name="name">conference.certificate.list</field>
+        <field name="model">conference.certificate</field>
+        <field name="arch" type="xml">
+            <list string="Certificates" create="0" sample="1" decoration-muted="state == 'revoked'">
+                <field name="name"/>
+                <field name="attendee_name"/>
+                <field name="attendee_email" optional="show"/>
+                <field name="event_id" optional="show"/>
+                <field name="issue_date"/>
+                <field name="session_count" optional="show"/>
+                <field name="cpd_points" optional="show" sum="Total"/>
+                <field name="method" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'issued'" decoration-danger="state == 'revoked'"/>
+                <field name="company_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="conference_certificate_view_form" model="ir.ui.view">
+        <field name="name">conference.certificate.form</field>
+        <field name="model">conference.certificate</field>
+        <field name="arch" type="xml">
+            <form string="Certificate" create="0">
+                <header>
+                    <button name="action_send" type="object" string="Email Again" class="btn-primary" invisible="state != 'issued'"/>
+                    <button name="action_print" type="object" string="Print"/>
+                    <button name="action_open_verify_page" type="object" string="Verification Page" invisible="state != 'issued'"/>
+                    <button name="action_revoke" type="object" string="Revoke" invisible="state != 'issued'"
+                            confirm="Revoke this certificate? Its verification page will say it is no longer valid."/>
+                    <button name="action_reinstate" type="object" string="Reinstate" invisible="state != 'revoked'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="attendee_name"/>
+                            <field name="attendee_email"/>
+                            <field name="registration_id" readonly="1"/>
+                            <field name="event_id"/>
+                        </group>
+                        <group>
+                            <field name="issue_date"/>
+                            <field name="session_count"/>
+                            <field name="cpd_points"/>
+                            <field name="method"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="conference_certificate_view_search" model="ir.ui.view">
+        <field name="name">conference.certificate.search</field>
+        <field name="model">conference.certificate</field>
+        <field name="arch" type="xml">
+            <search string="Certificates">
+                <field name="name"/>
+                <field name="attendee_name" filter_domain="['|', ('attendee_name', 'ilike', self), ('attendee_email', 'ilike', self)]"/>
+                <field name="event_id"/>
+                <filter string="Issued" name="issued" domain="[('state', '=', 'issued')]"/>
+                <filter string="Revoked" name="revoked" domain="[('state', '=', 'revoked')]"/>
+                <separator/>
+                <filter string="Issued by an Organiser" name="manual" domain="[('method', '=', 'manual')]"/>
+                <group>
+                    <filter string="Event" name="group_by_event" context="{'group_by': 'event_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="conference_certificate_action" model="ir.actions.act_window">
+        <field name="name">Certificates</field>
+        <field name="res_model">conference.certificate</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No certificates issued yet</p>
+            <p>Turn on certificates on the event's <strong>After the Event</strong> tab. They are issued when the
+               event ends, or press <strong>Issue Certificates</strong> on the event.</p>
+        </field>
+    </record>
+</odoo>
